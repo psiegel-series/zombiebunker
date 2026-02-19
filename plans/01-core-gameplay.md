@@ -99,18 +99,18 @@ After a valid swap, detect all matches (3+), clear matched tiles with an animati
 
 ### Tasks
 
-- [ ] Implement match detection: scan all rows and columns for runs of 3+ identical tile types
-- [ ] After a valid swap, run match detection on the entire board
-- [ ] Animate matched tiles disappearing (fade out, shrink, or flash)
-- [ ] Remove matched tiles from the board data (leave empty cells)
-- [ ] Handle overlapping matches (e.g., a tile is part of both a row and column match) — clear all of them
+- [x] Implement match detection: scan all rows and columns for runs of 3+ identical tile types
+- [x] After a valid swap, run match detection on the entire board
+- [x] Animate matched tiles disappearing (fade out, shrink, or flash)
+- [x] Remove matched tiles from the board data (leave empty cells)
+- [x] Handle overlapping matches (e.g., a tile is part of both a row and column match) — clear all of them
 
 ### Tests
 
-- [ ] After a valid swap, matched tiles (3+ in a row/column) visually disappear
-- [ ] Tiles not part of a match remain in place
-- [ ] If a swap creates matches in both a row and column simultaneously (cross match), all matched tiles clear
-- [ ] After clearing, there are visible empty gaps in the grid
+- [x] After a valid swap, matched tiles (3+ in a row/column) visually disappear
+- [x] Tiles not part of a match remain in place
+- [x] If a swap creates matches in both a row and column simultaneously (cross match), all matched tiles clear
+- [x] After clearing, there are visible empty gaps in the grid
 
 ---
 

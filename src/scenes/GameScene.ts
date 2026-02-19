@@ -11,6 +11,7 @@ export const CELL_GAP = 4
 export const GRID_TOTAL = CELL_SIZE + CELL_GAP
 
 const SWAP_DURATION = 150
+const CLEAR_DURATION = 200
 
 interface TileSprite {
   bg: Phaser.GameObjects.Rectangle
@@ -169,6 +170,53 @@ export class GameScene extends Phaser.Scene {
       duration: SWAP_DURATION,
       ease: 'Power2',
       onComplete: () => {
+        this.clearMatches()
+      },
+    })
+  }
+
+  private clearMatches() {
+    const matches = this.board.findMatches()
+    if (matches.length === 0) {
+      this.animating = false
+      return
+    }
+
+    // Deduplicate cells across overlapping matches
+    const toClear = new Set<string>()
+    for (const match of matches) {
+      for (const cell of match.cells) {
+        toClear.add(`${cell.row},${cell.col}`)
+      }
+    }
+
+    const clearTargets: Phaser.GameObjects.GameObject[] = []
+    for (const key of toClear) {
+      const [row, col] = key.split(',').map(Number) as [number, number]
+      const tile = this.tiles[row]![col]
+      if (tile) {
+        clearTargets.push(tile.bg, tile.label)
+      }
+    }
+
+    this.tweens.add({
+      targets: clearTargets,
+      alpha: 0,
+      scale: 0.3,
+      duration: CLEAR_DURATION,
+      ease: 'Power2',
+      onComplete: () => {
+        // Remove from board data and destroy display objects
+        for (const key of toClear) {
+          const [row, col] = key.split(',').map(Number) as [number, number]
+          this.board.set(row, col, null)
+          const tile = this.tiles[row]![col]
+          if (tile) {
+            tile.bg.destroy()
+            tile.label.destroy()
+            this.tiles[row]![col] = null
+          }
+        }
         this.animating = false
       },
     })
