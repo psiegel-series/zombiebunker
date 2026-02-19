@@ -2,10 +2,12 @@ import Phaser from 'phaser'
 
 export enum ZombieType {
   Walker = 'walker',
+  Runner = 'runner',
+  Tank = 'tank',
+  Boss = 'boss',
 }
 
 interface ZombieConfig {
-  type: ZombieType
   hp: number
   speed: number
   color: number
@@ -13,13 +15,34 @@ interface ZombieConfig {
   damage: number
 }
 
-const ZOMBIE_CONFIGS: Record<ZombieType, Omit<ZombieConfig, 'type'>> = {
+const ZOMBIE_CONFIGS: Record<ZombieType, ZombieConfig> = {
   [ZombieType.Walker]: {
     hp: 20,
-    speed: 5, // pixels per second
+    speed: 5,
     color: 0x66cc44,
     radius: 10,
     damage: 10,
+  },
+  [ZombieType.Runner]: {
+    hp: 12,
+    speed: 15,
+    color: 0xcccc33,
+    radius: 8,
+    damage: 8,
+  },
+  [ZombieType.Tank]: {
+    hp: 80,
+    speed: 5,
+    color: 0x559944,
+    radius: 14,
+    damage: 20,
+  },
+  [ZombieType.Boss]: {
+    hp: 250,
+    speed: 10,
+    color: 0x883388,
+    radius: 20,
+    damage: 35,
   },
 }
 

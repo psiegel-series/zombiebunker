@@ -288,24 +288,24 @@ Replace the debug spawner with a proper wave system: discrete waves with breaks,
 
 ### Tasks
 
-- [ ] Define wave data: wave number, zombie counts by type, spawn timing
-- [ ] Implement a wave manager: spawn all zombies for the current wave over a period, then wait for all zombies to be cleared
-- [ ] Add a break period between waves (e.g., 5 seconds) with a visible "Wave X Complete" / "Wave X+1 Starting" message
-- [ ] Escalate difficulty each wave: increase zombie count, mix in Runners (from wave 3+) and Tanks (from wave 5+)
-- [ ] Add Runner zombie type: faster speed, lower HP than Walker
-- [ ] Add Tank zombie type: slower speed, higher HP than Walker
-- [ ] Every 5th wave, spawn a Boss zombie: very high HP, slow, visually larger
-- [ ] Display the current wave number on the HUD
+- [x] Define wave data: wave number, zombie counts by type, spawn timing
+- [x] Implement a wave manager: spawn all zombies for the current wave over a period, then wait for all zombies to be cleared
+- [x] Add a break period between waves (e.g., 5 seconds) with a visible "Wave X Complete" / "Wave X+1 Starting" message
+- [x] Escalate difficulty each wave: increase zombie count, mix in Runners (from wave 3+) and Tanks (from wave 5+)
+- [x] Add Runner zombie type: faster speed, lower HP than Walker
+- [x] Add Tank zombie type: slower speed, higher HP than Walker
+- [x] Every 5th wave, spawn a Boss zombie: very high HP, slow, visually larger
+- [x] Display the current wave number on the HUD
 
 ### Tests
 
-- [ ] The game starts with "Wave 1" and a small number of Walker zombies
-- [ ] After all zombies in a wave are killed, a "Wave Complete" message appears
-- [ ] After the break, the next wave starts automatically with more zombies
-- [ ] Runner zombies appear in later waves and move noticeably faster
-- [ ] Tank zombies appear in later waves and take noticeably more hits to kill
-- [ ] Wave 5 includes a visually larger Boss zombie with very high HP
-- [ ] The wave counter on the HUD increments correctly
+- [x] The game starts with "Wave 1" and a small number of Walker zombies
+- [x] After all zombies in a wave are killed, a "Wave Complete" message appears
+- [x] After the break, the next wave starts automatically with more zombies
+- [x] Runner zombies appear in later waves and move noticeably faster
+- [x] Tank zombies appear in later waves and take noticeably more hits to kill
+- [x] Wave 5 includes a visually larger Boss zombie with very high HP
+- [x] The wave counter on the HUD increments correctly
 
 ---
 

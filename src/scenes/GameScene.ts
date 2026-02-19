@@ -3,6 +3,7 @@ import { Board, GRID_COLS, GRID_ROWS, Match } from '../board/Board'
 import { TileType, TILE_COLORS, TILE_LABELS, baseType, isPoweredUp, poweredType } from '../board/TileType'
 import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
 import { Zombie, ZombieType } from '../entities/Zombie'
+import { WaveManager } from '../waves/WaveManager'
 
 export const GAME_WIDTH = 390
 export const GAME_HEIGHT = 844
@@ -20,7 +21,6 @@ const FALL_DURATION_PER_ROW = 80
 const CASCADE_PAUSE = 150
 const DRAG_LOCK_THRESHOLD = 6
 const ZOMBIE_SPAWN_MARGIN = 10
-const DEBUG_SPAWN_INTERVAL = 2000
 const BULLET_DAMAGE = 15
 const GRENADE_DAMAGE = 20
 const GRENADE_RADIUS = 60
@@ -61,11 +61,14 @@ export class GameScene extends Phaser.Scene {
   private hpBarFill!: Phaser.GameObjects.Rectangle
   private hpBarBg!: Phaser.GameObjects.Rectangle
 
-  // Zombie state
+  // Zombie & wave state
   private zombies: Zombie[] = []
   private fireZones: FireZone[] = []
   private bunkerX = GAME_WIDTH / 2
   private bunkerY = MID_Y / 2
+  private waveManager!: WaveManager
+  private waveText!: Phaser.GameObjects.Text
+  private waveMessageText!: Phaser.GameObjects.Text
 
   // Drag state
   private dragging = false
@@ -106,23 +109,43 @@ export class GameScene extends Phaser.Scene {
       this.applyDamage(15)
     })
 
-    // Debug: press Z to spawn a zombie at a random edge
-    this.input.keyboard!.on('keydown-Z', () => {
-      this.spawnZombie()
-    })
+    // Wave HUD
+    this.waveText = this.add
+      .text(10, 10, 'Wave 1', {
+        fontSize: '16px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+      })
 
-    // Auto-spawn zombies on a timer for testing
-    this.time.addEvent({
-      delay: DEBUG_SPAWN_INTERVAL,
-      callback: () => this.spawnZombie(),
-      loop: true,
+    this.waveMessageText = this.add
+      .text(GAME_WIDTH / 2, MID_Y / 2 - 60, '', {
+        fontSize: '20px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setAlpha(0)
+
+    // Wave manager
+    this.waveManager = new WaveManager({
+      onSpawn: (type) => this.spawnZombie(type),
+      onWaveStart: (num) => {
+        this.waveText.setText(`Wave ${num}`)
+        this.showWaveMessage(`Wave ${num}`)
+      },
+      onWaveComplete: (num) => {
+        this.showWaveMessage(`Wave ${num} Complete!`)
+      },
     })
+    this.waveManager.start()
   }
 
   update(_time: number, delta: number) {
     const dt = delta / 1000
     this.updateZombies(dt)
     this.updateFireZones(delta, dt)
+    this.waveManager.update(delta, this.zombies.length)
   }
 
   private drawBattlefield() {
@@ -661,7 +684,7 @@ export class GameScene extends Phaser.Scene {
 
   // ── Zombies ─────────────────────────────────────────────────
 
-  private spawnZombie() {
+  private spawnZombie(type: ZombieType = ZombieType.Walker) {
     const edge = Math.floor(Math.random() * 4) // 0=top, 1=bottom, 2=left, 3=right
     let x: number
     let y: number
@@ -685,7 +708,7 @@ export class GameScene extends Phaser.Scene {
         break
     }
 
-    const zombie = new Zombie(this, x, y, ZombieType.Walker)
+    const zombie = new Zombie(this, x, y, type)
     this.zombies.push(zombie)
   }
 
@@ -976,6 +999,18 @@ export class GameScene extends Phaser.Scene {
       targets: [zombie.hpBar, zombie.hpBarBg],
       alpha: 0,
       duration: DEATH_DURATION,
+    })
+  }
+
+  private showWaveMessage(text: string) {
+    this.waveMessageText.setText(text).setAlpha(1)
+    this.tweens.killTweensOf(this.waveMessageText)
+    this.tweens.add({
+      targets: this.waveMessageText,
+      alpha: 0,
+      delay: 1500,
+      duration: 500,
+      ease: 'Power2',
     })
   }
 
