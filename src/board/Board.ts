@@ -77,7 +77,8 @@ export class Board {
   /**
    * Find all horizontal and vertical runs of 3+ matching tiles.
    * Powered-up tiles match their base type (e.g. HeavyN matches BulletN).
-   * Airstrike is wild — it matches any adjacent base type.
+   * Airstrike is wild — it continues any run but cannot bridge different types.
+   * A run of only Airstrikes does not count as a match.
    */
   findMatches(): Match[] {
     const matches: Match[] = []
@@ -88,22 +89,33 @@ export class Board {
       while (col < GRID_COLS) {
         const raw = this.get(row, col)
         if (!raw) { col++; continue }
-        const bt = baseType(raw)
+
+        // Track the locked base type for this run (null until a non-airstrike tile is seen)
+        let locked: TileType | null = raw === TileType.Airstrike ? null : baseType(raw)
         let end = col + 1
+
         while (end < GRID_COLS) {
           const next = this.get(row, end)
           if (!next) break
-          if (next === TileType.Airstrike || baseType(next) === bt || raw === TileType.Airstrike) {
-            // If the run started with Airstrike, lock to the first non-airstrike base type
+
+          if (next === TileType.Airstrike) {
+            // Airstrike continues any run
+            end++
+          } else if (locked === null) {
+            // First non-airstrike tile locks the run type
+            locked = baseType(next)
+            end++
+          } else if (baseType(next) === locked) {
             end++
           } else {
             break
           }
         }
-        if (end - col >= 3) {
+
+        if (end - col >= 3 && locked !== null) {
           const cells = []
           for (let c = col; c < end; c++) cells.push({ row, col: c })
-          matches.push({ type: bt === TileType.Airstrike ? this.resolveRunType(cells) : bt, cells })
+          matches.push({ type: locked, cells })
         }
         col = end
       }
@@ -115,36 +127,36 @@ export class Board {
       while (row < GRID_ROWS) {
         const raw = this.get(row, col)
         if (!raw) { row++; continue }
-        const bt = baseType(raw)
+
+        let locked: TileType | null = raw === TileType.Airstrike ? null : baseType(raw)
         let end = row + 1
+
         while (end < GRID_ROWS) {
           const next = this.get(end, col)
           if (!next) break
-          if (next === TileType.Airstrike || baseType(next) === bt || raw === TileType.Airstrike) {
+
+          if (next === TileType.Airstrike) {
+            end++
+          } else if (locked === null) {
+            locked = baseType(next)
+            end++
+          } else if (baseType(next) === locked) {
             end++
           } else {
             break
           }
         }
-        if (end - row >= 3) {
+
+        if (end - row >= 3 && locked !== null) {
           const cells = []
           for (let r = row; r < end; r++) cells.push({ row: r, col })
-          matches.push({ type: bt === TileType.Airstrike ? this.resolveRunType(cells) : bt, cells })
+          matches.push({ type: locked, cells })
         }
         row = end
       }
     }
 
     return matches
-  }
-
-  /** For a run that started with Airstrike, find the first non-airstrike base type. */
-  private resolveRunType(cells: { row: number; col: number }[]): TileType {
-    for (const c of cells) {
-      const t = this.get(c.row, c.col)
-      if (t && t !== TileType.Airstrike) return baseType(t)
-    }
-    return TileType.Airstrike
   }
 
   /**
