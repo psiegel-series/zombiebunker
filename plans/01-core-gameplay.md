@@ -219,20 +219,20 @@ Directional bullet matches fire at zombies in that direction. Grenade matches au
 
 ### Tasks
 
-- [ ] When a Bullet N/S/E/W match clears, find the nearest zombie(s) in that fixed direction from the bunker and deal damage
-- [ ] Animate a bullet projectile or flash effect from the bunker in the bullet's direction
-- [ ] When a Grenade match clears, find the densest cluster of zombies on the battlefield and launch a grenade at that area
-- [ ] Animate a grenade arc or explosion effect at the target area
-- [ ] When a zombie's HP reaches 0, play a death animation and remove it
+- [x] When a Bullet N/S/E/W match clears, find the nearest zombie(s) in that fixed direction from the bunker and deal damage
+- [x] Animate a bullet projectile or flash effect from the bunker in the bullet's direction
+- [x] When a Grenade match clears, find the densest cluster of zombies on the battlefield and launch a grenade at that area
+- [x] Animate a grenade arc or explosion effect at the target area
+- [x] When a zombie's HP reaches 0, play a death animation and remove it
 
 ### Tests
 
-- [ ] Making a Bullet N match fires northward and damages/kills the nearest zombie to the north
-- [ ] Making a Bullet E match fires eastward — confirming each direction works independently
-- [ ] Making a Bullet match in a direction with no zombies fires into empty space (no crash, visual still plays)
-- [ ] Making a Grenade match shows an explosion at the densest group of zombies
-- [ ] Grenade explosion damages multiple zombies if they are clustered together
-- [ ] Killed zombies visually disappear from the battlefield
+- [x] Making a Bullet N match fires northward and damages/kills the nearest zombie to the north
+- [x] Making a Bullet E match fires eastward — confirming each direction works independently
+- [x] Making a Bullet match in a direction with no zombies fires into empty space (no crash, visual still plays)
+- [x] Making a Grenade match shows an explosion at the densest group of zombies
+- [x] Grenade explosion damages multiple zombies if they are clustered together
+- [x] Killed zombies visually disappear from the battlefield
 
 ---
 

@@ -15,8 +15,8 @@ interface ZombieConfig {
 
 const ZOMBIE_CONFIGS: Record<ZombieType, Omit<ZombieConfig, 'type'>> = {
   [ZombieType.Walker]: {
-    hp: 30,
-    speed: 25, // pixels per second
+    hp: 20,
+    speed: 5, // pixels per second
     color: 0x66cc44,
     radius: 10,
     damage: 10,
