@@ -55,19 +55,19 @@ Populate the 7x7 grid with colored tiles representing the 7 tile types. No inter
 
 ### Tasks
 
-- [ ] Define the 7 tile types as an enum/constant (Bullets, CW, CCW, Grenade, Gasoline, Medkit, Boxes)
-- [ ] Assign each tile type a distinct color (placeholder — no sprites yet)
-- [ ] Create a `Board` class that holds a 7x7 2D array of tile types
-- [ ] Implement board generation: fill randomly while ensuring no initial 3-in-a-row matches exist
-- [ ] Render each tile as a colored square in its grid cell
-- [ ] Add a small icon or letter label on each tile to distinguish types beyond just color
+- [x] Define the 7 tile types as an enum/constant (Bullets, CW, CCW, Grenade, Gasoline, Medkit, Boxes)
+- [x] Assign each tile type a distinct color (placeholder — no sprites yet)
+- [x] Create a `Board` class that holds a 7x7 2D array of tile types
+- [x] Implement board generation: fill randomly while ensuring no initial 3-in-a-row matches exist
+- [x] Render each tile as a colored square in its grid cell
+- [x] Add a small icon or letter label on each tile to distinguish types beyond just color
 
 ### Tests
 
-- [ ] The 7x7 grid is filled with colored tiles — no empty cells
-- [ ] At least 5 different colors are visible (7 types means variety on any board)
-- [ ] No three-in-a-row matches are present on the initial board (count manually in a few rows/columns)
-- [ ] Each tile has a visible letter or icon making its type identifiable
+- [x] The 7x7 grid is filled with colored tiles — no empty cells
+- [x] At least 5 different colors are visible (7 types means variety on any board)
+- [x] No three-in-a-row matches are present on the initial board (count manually in a few rows/columns)
+- [x] Each tile has a visible letter or icon making its type identifiable
 
 ---
 

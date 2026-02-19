@@ -1,24 +1,27 @@
 import Phaser from 'phaser'
+import { Board, GRID_COLS, GRID_ROWS } from '../board/Board'
+import { TILE_COLORS, TILE_LABELS } from '../board/TileType'
 
-const GAME_WIDTH = 390
-const GAME_HEIGHT = 844
-const MID_Y = Math.floor(GAME_HEIGHT / 2)
+export const GAME_WIDTH = 390
+export const GAME_HEIGHT = 844
+export const MID_Y = Math.floor(GAME_HEIGHT / 2)
 
-const GRID_COLS = 7
-const GRID_ROWS = 7
-const CELL_SIZE = 44
-const CELL_GAP = 4
-const GRID_TOTAL = CELL_SIZE + CELL_GAP
+export const CELL_SIZE = 44
+export const CELL_GAP = 4
+export const GRID_TOTAL = CELL_SIZE + CELL_GAP
 
 export class GameScene extends Phaser.Scene {
+  private board!: Board
+
   constructor() {
     super({ key: 'Game' })
   }
 
   create() {
+    this.board = new Board()
     this.drawBattlefield()
     this.drawBunker()
-    this.drawGrid()
+    this.drawTiles()
   }
 
   private drawBattlefield() {
@@ -53,20 +56,37 @@ export class GameScene extends Phaser.Scene {
     g.strokePath()
   }
 
-  private drawGrid() {
-    const gridWidth = GRID_COLS * GRID_TOTAL - CELL_GAP
-    const gridHeight = GRID_ROWS * GRID_TOTAL - CELL_GAP
-    const startX = (GAME_WIDTH - gridWidth) / 2 + CELL_SIZE / 2
-    const startY = MID_Y + (MID_Y - gridHeight) / 2 + CELL_SIZE / 2
+  private drawTiles() {
+    const { startX, startY } = gridOrigin()
 
     for (let row = 0; row < GRID_ROWS; row++) {
       for (let col = 0; col < GRID_COLS; col++) {
+        const tile = this.board.get(row, col)
+        if (!tile) continue
+
         const x = startX + col * GRID_TOTAL
         const y = startY + row * GRID_TOTAL
+
         this.add
-          .rectangle(x, y, CELL_SIZE, CELL_SIZE)
-          .setStrokeStyle(1, 0x3a506b)
+          .rectangle(x, y, CELL_SIZE, CELL_SIZE, TILE_COLORS[tile])
+          .setStrokeStyle(1, 0x222222)
+
+        this.add
+          .text(x, y, TILE_LABELS[tile], {
+            fontSize: '18px',
+            fontFamily: 'monospace',
+            color: '#000000',
+          })
+          .setOrigin(0.5)
       }
     }
   }
+}
+
+export function gridOrigin() {
+  const gridWidth = GRID_COLS * GRID_TOTAL - CELL_GAP
+  const gridHeight = GRID_ROWS * GRID_TOTAL - CELL_GAP
+  const startX = (GAME_WIDTH - gridWidth) / 2 + CELL_SIZE / 2
+  const startY = MID_Y + (MID_Y - gridHeight) / 2 + CELL_SIZE / 2
+  return { startX, startY }
 }
