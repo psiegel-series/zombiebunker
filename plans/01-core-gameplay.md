@@ -77,19 +77,19 @@ Allow the player to tap two adjacent tiles to swap them. Only valid swaps (those
 
 ### Tasks
 
-- [ ] Add tap/click input handling on the grid: first tap selects a tile (highlight it), second tap on an adjacent tile attempts a swap
-- [ ] If the second tap is not adjacent, deselect and select the new tile instead
-- [ ] Before executing a swap, check if it would create at least one 3+ match
-- [ ] If the swap is invalid, play a brief "reject" animation (tiles bounce back)
-- [ ] If the swap is valid, animate the two tiles sliding into each other's positions and update the board data
+- [x] Add tap/click input handling on the grid: first tap selects a tile (highlight it), second tap on an adjacent tile attempts a swap
+- [x] If the second tap is not adjacent, deselect and select the new tile instead
+- [x] Before executing a swap, check if it would create at least one 3+ match
+- [x] If the swap is invalid, play a brief "reject" animation (tiles bounce back)
+- [x] If the swap is valid, animate the two tiles sliding into each other's positions and update the board data
 
 ### Tests
 
-- [ ] Tapping a tile highlights it visually (border, glow, or scale change)
-- [ ] Tapping an adjacent tile causes them to swap with a visible animation
-- [ ] Tapping a non-adjacent tile after selecting one changes the selection to the new tile
-- [ ] Attempting a swap that doesn't create a match causes tiles to bounce back to their original positions
-- [ ] After a valid swap, the two tiles are in their new positions on the board
+- [x] Tapping a tile highlights it visually (border, glow, or scale change)
+- [x] Tapping an adjacent tile causes them to swap with a visible animation
+- [x] Tapping a non-adjacent tile after selecting one changes the selection to the new tile
+- [x] Attempting a swap that doesn't create a match causes tiles to bounce back to their original positions
+- [x] After a valid swap, the two tiles are in their new positions on the board
 
 ---
 

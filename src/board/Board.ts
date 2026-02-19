@@ -3,6 +3,11 @@ import { TileType, ALL_TILE_TYPES } from './TileType'
 export const GRID_COLS = 7
 export const GRID_ROWS = 7
 
+export interface Match {
+  type: TileType
+  cells: { row: number; col: number }[]
+}
+
 export class Board {
   readonly cells: (TileType | null)[][]
 
@@ -19,6 +24,83 @@ export class Board {
 
   set(row: number, col: number, type: TileType | null) {
     this.cells[row]![col] = type
+  }
+
+  swap(r1: number, c1: number, r2: number, c2: number) {
+    const tmp = this.get(r1, c1)
+    this.set(r1, c1, this.get(r2, c2))
+    this.set(r2, c2, tmp)
+  }
+
+  /** Check if swapping two cells would produce a match involving either cell. Does not mutate the board. */
+  wouldMatch(r1: number, c1: number, r2: number, c2: number): boolean {
+    this.swap(r1, c1, r2, c2)
+    const hasMatch = this.findMatchesAt(r1, c1) || this.findMatchesAt(r2, c2)
+    this.swap(r1, c1, r2, c2)
+    return hasMatch
+  }
+
+  /** Check if a specific cell is part of a 3+ run horizontally or vertically. */
+  private findMatchesAt(row: number, col: number): boolean {
+    const t = this.get(row, col)
+    if (!t) return false
+
+    // Horizontal run through (row, col)
+    let left = col
+    while (left > 0 && this.get(row, left - 1) === t) left--
+    let right = col
+    while (right < GRID_COLS - 1 && this.get(row, right + 1) === t) right++
+    if (right - left + 1 >= 3) return true
+
+    // Vertical run through (row, col)
+    let top = row
+    while (top > 0 && this.get(top - 1, col) === t) top--
+    let bottom = row
+    while (bottom < GRID_ROWS - 1 && this.get(bottom + 1, col) === t) bottom++
+    if (bottom - top + 1 >= 3) return true
+
+    return false
+  }
+
+  /** Find all horizontal and vertical runs of 3+ matching tiles. */
+  findMatches(): Match[] {
+    const matches: Match[] = []
+
+    // Horizontal runs
+    for (let row = 0; row < GRID_ROWS; row++) {
+      let col = 0
+      while (col < GRID_COLS) {
+        const t = this.get(row, col)
+        if (!t) { col++; continue }
+        let end = col + 1
+        while (end < GRID_COLS && this.get(row, end) === t) end++
+        if (end - col >= 3) {
+          const cells = []
+          for (let c = col; c < end; c++) cells.push({ row, col: c })
+          matches.push({ type: t, cells })
+        }
+        col = end
+      }
+    }
+
+    // Vertical runs
+    for (let col = 0; col < GRID_COLS; col++) {
+      let row = 0
+      while (row < GRID_ROWS) {
+        const t = this.get(row, col)
+        if (!t) { row++; continue }
+        let end = row + 1
+        while (end < GRID_ROWS && this.get(end, col) === t) end++
+        if (end - row >= 3) {
+          const cells = []
+          for (let r = row; r < end; r++) cells.push({ row: r, col })
+          matches.push({ type: t, cells })
+        }
+        row = end
+      }
+    }
+
+    return matches
   }
 
   private fillWithoutMatches() {
