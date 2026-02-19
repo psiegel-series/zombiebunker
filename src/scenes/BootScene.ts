@@ -9,5 +9,6 @@ export class BootScene extends Phaser.Scene {
   create() {
     initRundot()
     console.log('[ZombieBunker] BootScene ready')
+    this.scene.start('Game')
   }
 }

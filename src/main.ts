@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { BootScene } from './scenes/BootScene'
+import { GameScene } from './scenes/GameScene'
 
 export const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -13,5 +14,5 @@ export const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene],
+  scene: [BootScene, GameScene],
 })

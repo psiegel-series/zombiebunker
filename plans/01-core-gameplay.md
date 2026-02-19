@@ -34,18 +34,18 @@ Divide the canvas into two regions: battlefield (top half) and match-3 grid area
 
 ### Tasks
 
-- [ ] Create a `GameScene` that Phaser transitions to after `BootScene`
-- [ ] Draw a visible divider line or color difference at the vertical midpoint of the canvas
-- [ ] In the top half, draw a placeholder rectangle for the bunker at center
-- [ ] In the top half, draw a placeholder line or triangle on the bunker to represent the turret facing North
-- [ ] In the bottom half, draw a 7x7 grid of empty cell outlines, evenly spaced and centered
+- [x] Create a `GameScene` that Phaser transitions to after `BootScene`
+- [x] Draw a visible divider line or color difference at the vertical midpoint of the canvas
+- [x] In the top half, draw a placeholder rectangle for the bunker at center
+- [x] In the top half, draw a placeholder line or triangle on the bunker to represent the turret facing North
+- [x] In the bottom half, draw a 7x7 grid of empty cell outlines, evenly spaced and centered
 
 ### Tests
 
-- [ ] The screen is clearly split into two halves with different background colors or a visible divider
-- [ ] A rectangle representing the bunker is visible at the center of the top half
-- [ ] A line or triangle on the bunker indicates the turret's facing direction (North)
-- [ ] A 7x7 grid of cell outlines is visible in the bottom half, evenly spaced
+- [x] The screen is clearly split into two halves with different background colors or a visible divider
+- [x] A rectangle representing the bunker is visible at the center of the top half
+- [x] A line or triangle on the bunker indicates the turret's facing direction (North)
+- [x] A 7x7 grid of cell outlines is visible in the bottom half, evenly spaced
 
 ---
 
