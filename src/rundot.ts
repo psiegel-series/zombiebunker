@@ -16,11 +16,13 @@ export function initRundot() {
 
         RundotGameAPI.lifecycles.onPause(() => {
           game.pause()
+          game.sound.mute = true
           console.log('[Rundot] Game paused')
         })
 
         RundotGameAPI.lifecycles.onResume(() => {
           game.resume()
+          game.sound.mute = false
           console.log('[Rundot] Game resumed')
         })
 

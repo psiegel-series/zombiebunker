@@ -9,26 +9,19 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0f0f23)
+    // Cover-fit the splash image: scale uniformly to fill the screen, crop overflow
+    const splash = this.add.sprite(GAME_WIDTH / 2, 0, 'splash').setOrigin(0.5, 0)
+    const scale = Math.max(GAME_WIDTH / splash.width, GAME_HEIGHT / splash.height)
+    splash.setScale(scale)
 
-    this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, 'ZOMBIE\nBUNKER', {
-        fontSize: '48px',
-        fontFamily: 'monospace',
-        color: '#cc4444',
-        fontStyle: 'bold',
-        align: 'center',
-        lineSpacing: 8,
-      })
-      .setOrigin(0.5)
-
+    const btnY = GAME_HEIGHT * 0.78
     const btnBg = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, 160, 50, 0x336633)
+      .rectangle(GAME_WIDTH / 2, btnY, 160, 50, 0x336633)
       .setStrokeStyle(2, 0x66cc66)
       .setInteractive({ useHandCursor: true })
 
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, 'Play', {
+      .text(GAME_WIDTH / 2, btnY, 'Play', {
         fontSize: '24px',
         fontFamily: 'monospace',
         color: '#ffffff',

@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { Board, GRID_COLS, GRID_ROWS, Match } from '../board/Board'
-import { TileType, TILE_COLORS, TILE_LABELS, baseType, isPoweredUp, poweredType } from '../board/TileType'
+import { TileType, TILE_TEXTURE_KEYS, baseType, isPoweredUp, poweredType } from '../board/TileType'
 import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
 import { Zombie, ZombieType } from '../entities/Zombie'
 import { WaveManager } from '../waves/WaveManager'
@@ -14,18 +14,19 @@ export const CELL_SIZE = 44
 export const CELL_GAP = 4
 export const GRID_TOTAL = CELL_SIZE + CELL_GAP
 
-const BUNKER_MAX_HP = 100
-const MEDKIT_HEAL = 10
+const BUNKER_MAX_HP = 150
+const MEDKIT_HEAL = 15
+const MEGA_MEDKIT_HEAL = 50
 const SNAP_DURATION = 120
 const CLEAR_DURATION = 200
 const FALL_DURATION_PER_ROW = 80
 const CASCADE_PAUSE = 150
 const DRAG_LOCK_THRESHOLD = 6
 const ZOMBIE_SPAWN_MARGIN = 10
-const BULLET_DAMAGE = 15
+const BULLET_DAMAGE = 20
 const GRENADE_DAMAGE = 20
 const GRENADE_RADIUS = 60
-const GASOLINE_DPS = 15 // damage per second to each overlapping zombie
+const GASOLINE_DPS = 20 // damage per second to each overlapping zombie
 const GASOLINE_RADIUS = 80
 const GASOLINE_DURATION = 3000 // ms the fire zone lasts
 const HEAVY_BULLET_DAMAGE = 25
@@ -34,7 +35,6 @@ const ROCKET_DAMAGE = 35
 const NAPALM_RADIUS = 100
 const NAPALM_DURATION = 4000
 const NAPALM_DPS = 20
-const MEGA_MEDKIT_HEAL = 40
 const AIRSTRIKE_DAMAGE = 50
 const DEATH_DURATION = 150
 
@@ -47,8 +47,7 @@ const SCORE_PER_ZOMBIE: Record<ZombieType, number> = {
 const SCORE_PER_WAVE = 50
 
 interface TileSprite {
-  bg: Phaser.GameObjects.Rectangle
-  label: Phaser.GameObjects.Text
+  bg: Phaser.GameObjects.Sprite
 }
 
 interface FireZone {
@@ -91,8 +90,22 @@ export class GameScene extends Phaser.Scene {
   private dragStartX = 0
   private dragStartY = 0
   private boardSnapshot: (TileType | null)[][] | null = null
-  private highlightedCells: Set<string> = new Set()
+  private highlightedCells: Map<string, Phaser.GameObjects.Rectangle> = new Map()
   private lastWholeOffset = 0
+
+  // Audio
+  private sfxMatch!: Phaser.Sound.BaseSound
+  private sfxBullet!: Phaser.Sound.BaseSound
+  private sfxExplosion!: Phaser.Sound.BaseSound
+  private sfxFire!: Phaser.Sound.BaseSound
+  private sfxAirstrike!: Phaser.Sound.BaseSound
+  private sfxHeal!: Phaser.Sound.BaseSound
+  private sfxDamage!: Phaser.Sound.BaseSound
+  private sfxZombieDeath!: Phaser.Sound.BaseSound
+  private sfxWaveStart!: Phaser.Sound.BaseSound
+  private music!: Phaser.Sound.BaseSound
+  private sfxMuted = false
+  private musicMuted = false
 
   constructor() {
     super({ key: 'Game' })
@@ -135,6 +148,7 @@ export class GameScene extends Phaser.Scene {
         color: '#ffffff',
       })
       .setOrigin(1, 0)
+      .setDepth(100)
 
     this.waveText = this.add
       .text(10, 10, 'Wave 1', {
@@ -142,6 +156,7 @@ export class GameScene extends Phaser.Scene {
         fontFamily: 'monospace',
         color: '#ffffff',
       })
+      .setDepth(100)
 
     this.waveMessageText = this.add
       .text(GAME_WIDTH / 2, MID_Y / 2 - 60, '', {
@@ -152,6 +167,68 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setAlpha(0)
+      .setDepth(100)
+
+    // Audio
+    this.sfxMatch = this.sound.add('sfx_match')
+    this.sfxBullet = this.sound.add('sfx_bullet')
+    this.sfxExplosion = this.sound.add('sfx_explosion')
+    this.sfxFire = this.sound.add('sfx_fire')
+    this.sfxAirstrike = this.sound.add('sfx_airstrike')
+    this.sfxHeal = this.sound.add('sfx_heal')
+    this.sfxDamage = this.sound.add('sfx_damage')
+    this.sfxZombieDeath = this.sound.add('sfx_zombie_death')
+    this.sfxWaveStart = this.sound.add('sfx_wave_start')
+    this.music = this.sound.add('music_loop', { loop: true, volume: 0.3 })
+    this.music.play()
+
+    // Mute buttons
+    const btnSize = 28
+    const btnY = 14 + btnSize / 2
+    const btnGap = 6
+    const sfxBtnX = GAME_WIDTH / 2 - (btnGap / 2 + btnSize / 2)
+    const musicBtnX = GAME_WIDTH / 2 + (btnGap / 2 + btnSize / 2)
+
+    const sfxBtnBg = this.add
+      .rectangle(sfxBtnX, btnY, btnSize, btnSize, 0x556677, 0.9)
+      .setStrokeStyle(1, 0x88aacc)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true })
+    const sfxBtnLabel = this.add
+      .text(sfxBtnX, btnY, '\u{1F50A}', { fontSize: '16px' })
+      .setOrigin(0.5)
+      .setDepth(100)
+    sfxBtnBg.on('pointerover', () => sfxBtnBg.setFillStyle(0x667788, 1))
+    sfxBtnBg.on('pointerout', () => sfxBtnBg.setFillStyle(0x556677, 0.9))
+    sfxBtnBg.on('pointerdown', () => {
+      this.sfxMuted = !this.sfxMuted
+      sfxBtnLabel.setAlpha(this.sfxMuted ? 0.3 : 1)
+      sfxBtnBg.setStrokeStyle(1, this.sfxMuted ? 0x444444 : 0x88aacc)
+      sfxBtnBg.setFillStyle(this.sfxMuted ? 0x2a2a3a : 0x556677, this.sfxMuted ? 0.6 : 0.9)
+    })
+
+    const musicBtnBg = this.add
+      .rectangle(musicBtnX, btnY, btnSize, btnSize, 0x556677, 0.9)
+      .setStrokeStyle(1, 0x88aacc)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true })
+    const musicBtnLabel = this.add
+      .text(musicBtnX, btnY, '\u{1F3B5}', { fontSize: '16px' })
+      .setOrigin(0.5)
+      .setDepth(100)
+    musicBtnBg.on('pointerover', () => musicBtnBg.setFillStyle(0x667788, 1))
+    musicBtnBg.on('pointerout', () => musicBtnBg.setFillStyle(0x556677, 0.9))
+    musicBtnBg.on('pointerdown', () => {
+      this.musicMuted = !this.musicMuted
+      musicBtnLabel.setAlpha(this.musicMuted ? 0.3 : 1)
+      musicBtnBg.setStrokeStyle(1, this.musicMuted ? 0x444444 : 0x88aacc)
+      musicBtnBg.setFillStyle(this.musicMuted ? 0x2a2a3a : 0x556677, this.musicMuted ? 0.6 : 0.9)
+      if (this.musicMuted) {
+        this.music.pause()
+      } else {
+        this.music.resume()
+      }
+    })
 
     // Wave manager
     this.waveManager = new WaveManager({
@@ -159,6 +236,7 @@ export class GameScene extends Phaser.Scene {
       onWaveStart: (num) => {
         this.waveText.setText(`Wave ${num}`)
         this.showWaveMessage(`Wave ${num}`)
+        this.playSfx(this.sfxWaveStart)
       },
       onWaveComplete: (num) => {
         this.addScore(SCORE_PER_WAVE)
@@ -166,6 +244,10 @@ export class GameScene extends Phaser.Scene {
       },
     })
     this.waveManager.start()
+  }
+
+  private playSfx(sound: Phaser.Sound.BaseSound) {
+    if (!this.sfxMuted) sound.play()
   }
 
   update(_time: number, delta: number) {
@@ -186,7 +268,7 @@ export class GameScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2
     const cy = MID_Y / 2
 
-    this.add.rectangle(cx, cy, 48, 48, 0x4a4a6a).setStrokeStyle(2, 0x8888aa)
+    this.add.sprite(cx, cy, 'bunker').setDisplaySize(48, 48)
   }
 
   private drawHpBar() {
@@ -224,6 +306,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOver) return
     this.bunkerHp = Math.max(0, this.bunkerHp - amount)
     this.updateHpBar()
+    this.playSfx(this.sfxDamage)
     console.log(`[Bunker] Took ${amount} damage, HP: ${this.bunkerHp}/${BUNKER_MAX_HP}`)
     if (this.bunkerHp <= 0) {
       this.triggerGameOver()
@@ -233,6 +316,7 @@ export class GameScene extends Phaser.Scene {
   private applyHeal(amount: number) {
     this.bunkerHp = Math.min(BUNKER_MAX_HP, this.bunkerHp + amount)
     this.updateHpBar()
+    this.playSfx(this.sfxHeal)
     console.log(`[Bunker] Healed ${amount}, HP: ${this.bunkerHp}/${BUNKER_MAX_HP}`)
   }
 
@@ -252,27 +336,13 @@ export class GameScene extends Phaser.Scene {
 
   private createTileAt(row: number, col: number, type: TileType): TileSprite {
     const { x, y } = gridPos(row, col)
-
-    const strokeColor = type === TileType.Airstrike
-      ? 0xff0000
-      : isPoweredUp(type) ? 0xffffff : 0x222222
-    const strokeWidth = type === TileType.Airstrike ? 3 : isPoweredUp(type) ? 2 : 1
+    const textureKey = TILE_TEXTURE_KEYS[type]
 
     const bg = this.add
-      .rectangle(x, y, CELL_SIZE, CELL_SIZE, TILE_COLORS[type])
-      .setStrokeStyle(strokeWidth, strokeColor)
+      .sprite(x, y, textureKey)
+      .setDisplaySize(CELL_SIZE, CELL_SIZE)
 
-    const labelColor = type === TileType.Airstrike ? '#ff0000' : '#000000'
-    const label = this.add
-      .text(x, y, TILE_LABELS[type], {
-        fontSize: '18px',
-        fontFamily: 'monospace',
-        color: labelColor,
-        fontStyle: isPoweredUp(type) || type === TileType.Airstrike ? 'bold' : 'normal',
-      })
-      .setOrigin(0.5)
-
-    return { bg, label }
+    return { bg }
   }
 
   // ── Drag input ──────────────────────────────────────────────
@@ -404,14 +474,12 @@ export class GameScene extends Phaser.Scene {
       const old = this.tiles[row]![col]
       if (old) {
         old.bg.destroy()
-        old.label.destroy()
       }
 
       const type = this.board.get(row, col)
       if (type) {
         const tile = this.createTileAt(row, col, type)
         tile.bg.x += pixelOffset
-        tile.label.x += pixelOffset
         this.tiles[row]![col] = tile
       } else {
         this.tiles[row]![col] = null
@@ -424,14 +492,12 @@ export class GameScene extends Phaser.Scene {
       const old = this.tiles[row]![col]
       if (old) {
         old.bg.destroy()
-        old.label.destroy()
       }
 
       const type = this.board.get(row, col)
       if (type) {
         const tile = this.createTileAt(row, col, type)
         tile.bg.y += pixelOffset
-        tile.label.y += pixelOffset
         this.tiles[row]![col] = tile
       } else {
         this.tiles[row]![col] = null
@@ -455,7 +521,7 @@ export class GameScene extends Phaser.Scene {
         if (needsMove) {
           tweenCount++
           this.tweens.add({
-            targets: [tile.bg, tile.label],
+            targets: [tile.bg],
             x: target.x,
             y: target.y,
             duration: SNAP_DURATION,
@@ -481,29 +547,22 @@ export class GameScene extends Phaser.Scene {
     for (const match of matches) {
       for (const cell of match.cells) {
         const key = `${cell.row},${cell.col}`
-        this.highlightedCells.add(key)
+        if (this.highlightedCells.has(key)) continue
         const tile = this.tiles[cell.row]![cell.col]
         if (tile) {
-          tile.bg.setStrokeStyle(3, 0xffffff)
+          const overlay = this.add
+            .rectangle(tile.bg.x, tile.bg.y, CELL_SIZE, CELL_SIZE)
+            .setStrokeStyle(3, 0xffffff)
+            .setFillStyle(0xffffff, 0.15)
+          this.highlightedCells.set(key, overlay)
         }
       }
     }
   }
 
   private clearMatchPreview() {
-    for (const key of this.highlightedCells) {
-      const [row, col] = key.split(',').map(Number) as [number, number]
-      const tile = this.tiles[row]![col]
-      if (tile) {
-        const t = this.board.get(row, col)
-        if (t === TileType.Airstrike) {
-          tile.bg.setStrokeStyle(3, 0xff0000)
-        } else if (t && isPoweredUp(t)) {
-          tile.bg.setStrokeStyle(2, 0xffffff)
-        } else {
-          tile.bg.setStrokeStyle(1, 0x222222)
-        }
-      }
+    for (const overlay of this.highlightedCells.values()) {
+      overlay.destroy()
     }
     this.highlightedCells.clear()
   }
@@ -516,6 +575,8 @@ export class GameScene extends Phaser.Scene {
       this.animating = false
       return
     }
+
+    this.playSfx(this.sfxMatch)
 
     // Determine which cells get bonus tiles instead of being cleared.
     // bonusCells: key -> tile type to place there after clearing.
@@ -567,7 +628,7 @@ export class GameScene extends Phaser.Scene {
       const [row, col] = key.split(',').map(Number) as [number, number]
       const tile = this.tiles[row]![col]
       if (tile) {
-        clearTargets.push(tile.bg, tile.label)
+        clearTargets.push(tile.bg)
       }
     }
 
@@ -584,7 +645,6 @@ export class GameScene extends Phaser.Scene {
           const tile = this.tiles[row]![col]
           if (tile) {
             tile.bg.destroy()
-            tile.label.destroy()
             this.tiles[row]![col] = null
           }
         }
@@ -595,7 +655,7 @@ export class GameScene extends Phaser.Scene {
           this.board.set(row, col, bonusType)
           // Destroy old sprite and create new one
           const old = this.tiles[row]![col]
-          if (old) { old.bg.destroy(); old.label.destroy() }
+          if (old) { old.bg.destroy() }
           this.tiles[row]![col] = this.createTileAt(row, col, bonusType)
         }
 
@@ -673,7 +733,7 @@ export class GameScene extends Phaser.Scene {
       maxFallDuration = Math.max(maxFallDuration, duration)
 
       this.tweens.add({
-        targets: [tile.bg, tile.label],
+        targets: [tile.bg],
         y: target.y,
         duration,
         ease: 'Bounce.easeOut',
@@ -696,13 +756,12 @@ export class GameScene extends Phaser.Scene {
       const target = gridPos(fill.row, fill.col)
       const spawnY = gridPos(0, fill.col).y - GRID_TOTAL
       tile.bg.setY(spawnY)
-      tile.label.setY(spawnY)
 
       const duration = (fill.row + 1) * FALL_DURATION_PER_ROW
       maxDuration = Math.max(maxDuration, duration)
 
       this.tweens.add({
-        targets: [tile.bg, tile.label],
+        targets: [tile.bg],
         y: target.y,
         duration,
         ease: 'Bounce.easeOut',
@@ -770,6 +829,8 @@ export class GameScene extends Phaser.Scene {
   // ── Combat ───────────────────────────────────────────────────
 
   private fireBullet(type: TileType, powered = false) {
+    this.playSfx(this.sfxBullet)
+
     // Direction vector from bunker
     let dirX = 0
     let dirY = 0
@@ -822,7 +883,7 @@ export class GameScene extends Phaser.Scene {
         const by = blocker.y - this.bunkerY
         const cross = Math.abs(bx * candidate.ry - by * candidate.rx)
         const perpDist = cross / candidate.dist
-        if (perpDist < blocker.body.radius * 2) {
+        if (perpDist < blocker.radius * 2) {
           blocked = true
           break
         }
@@ -900,6 +961,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fireGasoline(powered = false) {
+    this.playSfx(this.sfxFire)
     const radius = powered ? NAPALM_RADIUS : GASOLINE_RADIUS
     const duration = powered ? NAPALM_DURATION : GASOLINE_DURATION
     const dps = powered ? NAPALM_DPS : GASOLINE_DPS
@@ -920,6 +982,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fireAirstrike() {
+    this.playSfx(this.sfxAirstrike)
+
     // Damage all zombies on the battlefield
     for (const z of this.zombies) {
       if (z.isDead) continue
@@ -998,6 +1062,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private animateExplosion(x: number, y: number, radius: number) {
+    this.playSfx(this.sfxExplosion)
+
     const circle = this.add.circle(x, y, radius * 0.3, 0xff6600, 0.8)
     const ring = this.add.circle(x, y, radius * 0.3, 0x000000, 0).setStrokeStyle(3, 0xff4400)
 
@@ -1021,6 +1087,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private playDeathEffect(zombie: Zombie) {
+    this.playSfx(this.sfxZombieDeath)
+
     // Flash and shrink the zombie body before it gets cleaned up in updateZombies
     this.tweens.add({
       targets: [zombie.body],
@@ -1045,6 +1113,9 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOver) return
     this.gameOver = true
     this.animating = true // block input
+
+    // Stop music
+    this.music.stop()
 
     // Clean up remaining zombies visually
     for (const z of this.zombies) z.destroy()

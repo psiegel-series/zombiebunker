@@ -96,3 +96,21 @@ export const TILE_LABELS: Record<TileType, string> = {
   [TileType.MegaMedkit]: '✚',
   [TileType.Airstrike]: '★',
 }
+
+export const TILE_TEXTURE_KEYS: Record<TileType, string> = {
+  [TileType.BulletN]: 'tile_bullet_n',
+  [TileType.BulletS]: 'tile_bullet_s',
+  [TileType.BulletE]: 'tile_bullet_e',
+  [TileType.BulletW]: 'tile_bullet_w',
+  [TileType.Grenade]: 'tile_grenade',
+  [TileType.Gasoline]: 'tile_gasoline',
+  [TileType.Medkit]: 'tile_medkit',
+  [TileType.HeavyN]: 'tile_heavy_n',
+  [TileType.HeavyS]: 'tile_heavy_s',
+  [TileType.HeavyE]: 'tile_heavy_e',
+  [TileType.HeavyW]: 'tile_heavy_w',
+  [TileType.Rocket]: 'tile_rocket',
+  [TileType.Napalm]: 'tile_napalm',
+  [TileType.MegaMedkit]: 'tile_mega_medkit',
+  [TileType.Airstrike]: 'tile_airstrike',
+}

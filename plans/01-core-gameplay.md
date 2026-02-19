@@ -339,22 +339,22 @@ Replace all placeholder graphics with pixel art, add sound effects, and tune gam
 
 ### Tasks
 
-- [ ] Create or source pixel art sprites for: bunker, 7 tile types (4 directional bullets + grenade + gasoline + medkit), powered-up tile variants, airstrike tile
-- [ ] Create or source pixel art sprites for: Walker, Runner, Tank, Boss zombies
-- [ ] Create or source pixel art effects for: bullet, grenade explosion, gasoline fire, airstrike, zombie death
-- [ ] Replace all placeholder rectangles and circles with sprites
-- [ ] Add tile swap, match, and cascade sound effects
-- [ ] Add weapon fire and explosion sound effects
-- [ ] Add zombie spawn and death sound effects
-- [ ] Add background music (looping, low-key tension)
-- [ ] Integrate rundot lifecycle hooks to mute audio on pause/sleep
-- [ ] Tune game balance: zombie HP/speed values, weapon damage, heal amounts, wave pacing
+- [x] Create or source pixel art sprites for: bunker, 7 tile types (4 directional bullets + grenade + gasoline + medkit), powered-up tile variants, airstrike tile
+- [x] Create or source pixel art sprites for: Walker, Runner, Tank, Boss zombies
+- [x] Create or source pixel art effects for: bullet, grenade explosion, gasoline fire, airstrike, zombie death
+- [x] Replace all placeholder rectangles and circles with sprites
+- [x] Add tile swap, match, and cascade sound effects
+- [x] Add weapon fire and explosion sound effects
+- [x] Add zombie spawn and death sound effects
+- [x] Add background music (looping, low-key tension)
+- [x] Integrate rundot lifecycle hooks to mute audio on pause/sleep
+- [x] Tune game balance: zombie HP/speed values, weapon damage, heal amounts, wave pacing
 
 ### Tests
 
-- [ ] All game elements use pixel art sprites, no colored rectangles remain
-- [ ] Sound effects play for tile swaps, matches, weapon fires, and zombie deaths
-- [ ] Background music plays during gameplay and stops on game over
-- [ ] Audio mutes when the game is paused or backgrounded (rundot lifecycle)
-- [ ] Game feels balanced: early waves are manageable, difficulty ramps feel fair, player can survive 10+ waves with good play
-- [ ] The game runs at a stable frame rate without jank or stuttering
+- [x] All game elements use pixel art sprites, no colored rectangles remain
+- [x] Sound effects play for tile swaps, matches, weapon fires, and zombie deaths
+- [x] Background music plays during gameplay and stops on game over
+- [x] Audio mutes when the game is paused or backgrounded (rundot lifecycle)
+- [x] Game feels balanced: early waves are manageable, difficulty ramps feel fair, player can survive 10+ waves with good play
+- [x] The game runs at a stable frame rate without jank or stuttering
