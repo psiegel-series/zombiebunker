@@ -24,11 +24,22 @@ const DEBUG_SPAWN_INTERVAL = 2000
 const BULLET_DAMAGE = 15
 const GRENADE_DAMAGE = 20
 const GRENADE_RADIUS = 60
+const GASOLINE_DPS = 15 // damage per second to each overlapping zombie
+const GASOLINE_RADIUS = 80
+const GASOLINE_DURATION = 3000 // ms the fire zone lasts
 const DEATH_DURATION = 150
 
 interface TileSprite {
   bg: Phaser.GameObjects.Rectangle
   label: Phaser.GameObjects.Text
+}
+
+interface FireZone {
+  x: number
+  y: number
+  radius: number
+  remaining: number // ms left
+  gfx: Phaser.GameObjects.Arc
 }
 
 type DragAxis = 'row' | 'col' | null
@@ -43,6 +54,7 @@ export class GameScene extends Phaser.Scene {
 
   // Zombie state
   private zombies: Zombie[] = []
+  private fireZones: FireZone[] = []
   private bunkerX = GAME_WIDTH / 2
   private bunkerY = MID_Y / 2
 
@@ -101,6 +113,7 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number) {
     const dt = delta / 1000
     this.updateZombies(dt)
+    this.updateFireZones(delta, dt)
   }
 
   private drawBattlefield() {
@@ -438,6 +451,8 @@ export class GameScene extends Phaser.Scene {
         this.fireBullet(effect.type)
       } else if (effect.type === TileType.Grenade) {
         this.fireGrenade()
+      } else if (effect.type === TileType.Gasoline) {
+        this.fireGasoline()
       }
     })
 
@@ -708,6 +723,57 @@ export class GameScene extends Phaser.Scene {
         z.takeDamage(GRENADE_DAMAGE)
         if (z.isDead) {
           this.playDeathEffect(z)
+        }
+      }
+    }
+  }
+
+  private fireGasoline() {
+    // Create a lingering fire zone around the bunker
+    const gfx = this.add
+      .circle(this.bunkerX, this.bunkerY, GASOLINE_RADIUS, 0xff4400, 0.25)
+      .setStrokeStyle(2, 0xff6600, 0.6)
+
+    this.fireZones.push({
+      x: this.bunkerX,
+      y: this.bunkerY,
+      radius: GASOLINE_RADIUS,
+      remaining: GASOLINE_DURATION,
+      gfx,
+    })
+  }
+
+  private updateFireZones(deltaMs: number, dt: number) {
+    for (let i = this.fireZones.length - 1; i >= 0; i--) {
+      const zone = this.fireZones[i]!
+      zone.remaining -= deltaMs
+
+      if (zone.remaining <= 0) {
+        zone.gfx.destroy()
+        this.fireZones.splice(i, 1)
+        continue
+      }
+
+      // Fade out over the last 500ms
+      const fadeStart = 500
+      if (zone.remaining < fadeStart) {
+        zone.gfx.setAlpha(0.25 * (zone.remaining / fadeStart))
+      }
+
+      // Pulse the stroke
+      const pulse = 0.4 + 0.2 * Math.sin(Date.now() * 0.01)
+      zone.gfx.setStrokeStyle(2, 0xff6600, pulse)
+
+      // Damage overlapping zombies
+      for (const z of this.zombies) {
+        if (z.isDead) continue
+        const dx = z.x - zone.x
+        const dy = z.y - zone.y
+        if (Math.sqrt(dx * dx + dy * dy) <= zone.radius) {
+          z.takeDamage(GASOLINE_DPS * dt)
+          if (z.isDead) {
+            this.playDeathEffect(z)
+          }
         }
       }
     }

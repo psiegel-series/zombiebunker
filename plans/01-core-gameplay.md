@@ -242,15 +242,15 @@ Gasoline matches damage zombies near the bunker, regardless of turret direction.
 
 ### Tasks
 
-- [ ] When a Gasoline match clears, deal damage to all zombies within a defined melee radius around the bunker
-- [ ] Animate a fire burst effect around the bunker
-- [ ] Gasoline effect is non-directional (does not depend on turret facing)
+- [x] When a Gasoline match clears, deal damage to all zombies within a defined melee radius around the bunker
+- [x] Animate a fire burst effect around the bunker
+- [x] Gasoline effect is non-directional (does not depend on turret facing)
 
 ### Tests
 
-- [ ] Making a Gasoline match when zombies are close to the bunker damages/kills them
-- [ ] The fire effect appears around the bunker, not in a specific direction
-- [ ] Zombies far from the bunker are unaffected by Gasoline
+- [x] Making a Gasoline match when zombies are close to the bunker damages/kills them
+- [x] The fire effect appears around the bunker, not in a specific direction
+- [x] Zombies far from the bunker are unaffected by Gasoline
 
 ---
 
