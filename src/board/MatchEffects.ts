@@ -4,9 +4,11 @@ import { Match } from './Board'
 export interface MatchEffect {
   type: TileType
   count: number
+  powered: boolean
+  airstrike: boolean
 }
 
-const EFFECT_NAMES: Record<TileType, string> = {
+const EFFECT_NAMES: Partial<Record<TileType, string>> = {
   [TileType.BulletN]: 'Bullet N fired',
   [TileType.BulletS]: 'Bullet S fired',
   [TileType.BulletE]: 'Bullet E fired',
@@ -14,15 +16,27 @@ const EFFECT_NAMES: Record<TileType, string> = {
   [TileType.Grenade]: 'Grenade launched (targets densest cluster)',
   [TileType.Gasoline]: 'Gasoline burst (damages nearby zombies)',
   [TileType.Medkit]: 'Medkit heal',
+  [TileType.Airstrike]: 'Airstrike (damages all zombies)',
 }
 
 export function dispatchMatchEffects(
   matches: Match[],
+  containsPowered: (match: Match) => boolean,
+  containsAirstrike: (match: Match) => boolean,
   onEffect?: (effect: MatchEffect) => void,
 ) {
   for (const match of matches) {
-    const effect: MatchEffect = { type: match.type, count: match.cells.length }
-    console.log(`[Effect] ${EFFECT_NAMES[match.type]} (x${match.cells.length})`)
+    const powered = containsPowered(match)
+    const airstrike = containsAirstrike(match)
+    const effect: MatchEffect = {
+      type: match.type,
+      count: match.cells.length,
+      powered,
+      airstrike,
+    }
+    const name = EFFECT_NAMES[match.type] ?? match.type
+    const suffix = airstrike ? ' [AIRSTRIKE]' : powered ? ' [POWERED]' : ''
+    console.log(`[Effect] ${name} (x${match.cells.length})${suffix}`)
     onEffect?.(effect)
   }
 }

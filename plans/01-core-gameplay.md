@@ -260,25 +260,25 @@ Implement powered-up tiles from 4-matches and Airstrike tiles from 5-match/T/L s
 
 ### Tasks
 
-- [ ] Detect 4-in-a-row matches: instead of clearing all 4, clear 3 and leave behind a powered-up tile in the 4th position
-- [ ] Visually distinguish powered-up tiles (glow, border, or different shade)
-- [ ] Implement powered-up effects when a powered-up tile is later matched: Heavy Ammo (piercing shot hitting multiple zombies in that direction), Rocket (bigger explosion radius), Napalm (lingering fire — visual only for now, damage over time can be simplified), Mega-Medkit (large heal)
-- [ ] Detect 5-in-a-row, T-shape, and L-shape formations
-- [ ] When these special shapes match, clear the tiles and leave behind an Airstrike tile
-- [ ] Visually distinguish Airstrike tiles (unique color or icon)
-- [ ] When an Airstrike tile is matched, damage all zombies on the battlefield
-- [ ] Animate a screen-wide airstrike effect
+- [x] Detect 4-in-a-row matches: instead of clearing all 4, clear 3 and leave behind a powered-up tile in the 4th position
+- [x] Visually distinguish powered-up tiles (glow, border, or different shade)
+- [x] Implement powered-up effects when a powered-up tile is later matched: Heavy Ammo (piercing shot hitting multiple zombies in that direction), Rocket (bigger explosion radius), Napalm (lingering fire — visual only for now, damage over time can be simplified), Mega-Medkit (large heal)
+- [x] Detect 5-in-a-row, T-shape, and L-shape formations
+- [x] When these special shapes match, clear the tiles and leave behind an Airstrike tile
+- [x] Visually distinguish Airstrike tiles (unique color or icon)
+- [x] When an Airstrike tile is matched, damage all zombies on the battlefield
+- [x] Animate a screen-wide airstrike effect
 
 ### Tests
 
-- [ ] Making a 4-in-a-row match leaves behind a special powered-up tile instead of clearing all 4
-- [ ] Powered-up tiles look visually distinct from normal tiles
-- [ ] Matching a powered-up Bullet tile fires a piercing shot that hits multiple zombies in that direction
-- [ ] Matching a powered-up Grenade tile creates a larger explosion than normal
-- [ ] Matching a powered-up Medkit tile heals significantly more than a normal Medkit match
-- [ ] Making a 5-in-a-row match produces an Airstrike tile
-- [ ] Making a T-shape or L-shape match produces an Airstrike tile
-- [ ] Matching an Airstrike tile damages every zombie on the battlefield
+- [x] Making a 4-in-a-row match leaves behind a special powered-up tile instead of clearing all 4
+- [x] Powered-up tiles look visually distinct from normal tiles
+- [x] Matching a powered-up Bullet tile fires a piercing shot that hits multiple zombies in that direction
+- [x] Matching a powered-up Grenade tile creates a larger explosion than normal
+- [x] Matching a powered-up Medkit tile heals significantly more than a normal Medkit match
+- [x] Making a 5-in-a-row match produces an Airstrike tile
+- [x] Making a T-shape or L-shape match produces an Airstrike tile
+- [x] Matching an Airstrike tile damages every zombie on the battlefield
 
 ---
 

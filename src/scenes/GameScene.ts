@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
-import { Board, GRID_COLS, GRID_ROWS } from '../board/Board'
-import { TileType, TILE_COLORS, TILE_LABELS } from '../board/TileType'
+import { Board, GRID_COLS, GRID_ROWS, Match } from '../board/Board'
+import { TileType, TILE_COLORS, TILE_LABELS, baseType, isPoweredUp, poweredType } from '../board/TileType'
 import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
 import { Zombie, ZombieType } from '../entities/Zombie'
 
@@ -27,6 +27,14 @@ const GRENADE_RADIUS = 60
 const GASOLINE_DPS = 15 // damage per second to each overlapping zombie
 const GASOLINE_RADIUS = 80
 const GASOLINE_DURATION = 3000 // ms the fire zone lasts
+const HEAVY_BULLET_DAMAGE = 25
+const ROCKET_RADIUS = 100
+const ROCKET_DAMAGE = 35
+const NAPALM_RADIUS = 100
+const NAPALM_DURATION = 4000
+const NAPALM_DPS = 20
+const MEGA_MEDKIT_HEAL = 40
+const AIRSTRIKE_DAMAGE = 50
 const DEATH_DURATION = 150
 
 interface TileSprite {
@@ -39,6 +47,7 @@ interface FireZone {
   y: number
   radius: number
   remaining: number // ms left
+  dps: number
   gfx: Phaser.GameObjects.Arc
 }
 
@@ -189,15 +198,22 @@ export class GameScene extends Phaser.Scene {
   private createTileAt(row: number, col: number, type: TileType): TileSprite {
     const { x, y } = gridPos(row, col)
 
+    const strokeColor = type === TileType.Airstrike
+      ? 0xff0000
+      : isPoweredUp(type) ? 0xffffff : 0x222222
+    const strokeWidth = type === TileType.Airstrike ? 3 : isPoweredUp(type) ? 2 : 1
+
     const bg = this.add
       .rectangle(x, y, CELL_SIZE, CELL_SIZE, TILE_COLORS[type])
-      .setStrokeStyle(1, 0x222222)
+      .setStrokeStyle(strokeWidth, strokeColor)
 
+    const labelColor = type === TileType.Airstrike ? '#ff0000' : '#000000'
     const label = this.add
       .text(x, y, TILE_LABELS[type], {
         fontSize: '18px',
         fontFamily: 'monospace',
-        color: '#000000',
+        color: labelColor,
+        fontStyle: isPoweredUp(type) || type === TileType.Airstrike ? 'bold' : 'normal',
       })
       .setOrigin(0.5)
 
@@ -424,7 +440,14 @@ export class GameScene extends Phaser.Scene {
       const [row, col] = key.split(',').map(Number) as [number, number]
       const tile = this.tiles[row]![col]
       if (tile) {
-        tile.bg.setStrokeStyle(1, 0x222222)
+        const t = this.board.get(row, col)
+        if (t === TileType.Airstrike) {
+          tile.bg.setStrokeStyle(3, 0xff0000)
+        } else if (t && isPoweredUp(t)) {
+          tile.bg.setStrokeStyle(2, 0xffffff)
+        } else {
+          tile.bg.setStrokeStyle(1, 0x222222)
+        }
       }
     }
     this.highlightedCells.clear()
@@ -439,27 +462,48 @@ export class GameScene extends Phaser.Scene {
       return
     }
 
-    dispatchMatchEffects(matches, (effect: MatchEffect) => {
-      if (effect.type === TileType.Medkit) {
-        this.applyHeal(MEDKIT_HEAL)
-      } else if (
-        effect.type === TileType.BulletN ||
-        effect.type === TileType.BulletS ||
-        effect.type === TileType.BulletE ||
-        effect.type === TileType.BulletW
-      ) {
-        this.fireBullet(effect.type)
-      } else if (effect.type === TileType.Grenade) {
-        this.fireGrenade()
-      } else if (effect.type === TileType.Gasoline) {
-        this.fireGasoline()
+    // Determine which cells get bonus tiles instead of being cleared.
+    // bonusCells: key -> tile type to place there after clearing.
+    const bonusCells = new Map<string, TileType>()
+
+    // Check for T/L/5+ shapes first: merge overlapping matches of the same base type
+    // that together form a special shape.
+    const isSpecialShape = this.detectSpecialShapes(matches)
+
+    for (const match of matches) {
+      if (isSpecialShape.has(match)) {
+        // 5-match, T, or L shape → leave an Airstrike tile at the center cell
+        const center = match.cells[Math.floor(match.cells.length / 2)]!
+        bonusCells.set(`${center.row},${center.col}`, TileType.Airstrike)
+      } else if (match.cells.length >= 4) {
+        // 4-match → leave a powered-up tile at the last cell
+        const last = match.cells[match.cells.length - 1]!
+        bonusCells.set(`${last.row},${last.col}`, poweredType(match.type))
       }
+    }
+
+    // Check if any match contains a powered-up or airstrike tile (for enhanced effects)
+    const matchContainsPowered = (match: Match) =>
+      match.cells.some(c => {
+        const t = this.board.get(c.row, c.col)
+        return t !== null && isPoweredUp(t)
+      })
+    const matchContainsAirstrike = (match: Match) =>
+      match.cells.some(c => this.board.get(c.row, c.col) === TileType.Airstrike)
+
+    // Dispatch effects
+    dispatchMatchEffects(matches, matchContainsPowered, matchContainsAirstrike, (effect: MatchEffect) => {
+      this.handleMatchEffect(effect)
     })
 
+    // Build the set of cells to clear (excluding bonus positions)
     const toClear = new Set<string>()
     for (const match of matches) {
       for (const cell of match.cells) {
-        toClear.add(`${cell.row},${cell.col}`)
+        const key = `${cell.row},${cell.col}`
+        if (!bonusCells.has(key)) {
+          toClear.add(key)
+        }
       }
     }
 
@@ -489,9 +533,75 @@ export class GameScene extends Phaser.Scene {
             this.tiles[row]![col] = null
           }
         }
+
+        // Place bonus tiles
+        for (const [key, bonusType] of bonusCells) {
+          const [row, col] = key.split(',').map(Number) as [number, number]
+          this.board.set(row, col, bonusType)
+          // Destroy old sprite and create new one
+          const old = this.tiles[row]![col]
+          if (old) { old.bg.destroy(); old.label.destroy() }
+          this.tiles[row]![col] = this.createTileAt(row, col, bonusType)
+        }
+
         this.doGravityAndRefill()
       },
     })
+  }
+
+  private handleMatchEffect(effect: MatchEffect) {
+    if (effect.airstrike) {
+      this.fireAirstrike()
+      return
+    }
+
+    const bt = baseType(effect.type)
+    if (bt === TileType.Medkit) {
+      this.applyHeal(effect.powered ? MEGA_MEDKIT_HEAL : MEDKIT_HEAL)
+    } else if (
+      bt === TileType.BulletN || bt === TileType.BulletS ||
+      bt === TileType.BulletE || bt === TileType.BulletW
+    ) {
+      this.fireBullet(bt, effect.powered)
+    } else if (bt === TileType.Grenade) {
+      this.fireGrenade(effect.powered)
+    } else if (bt === TileType.Gasoline) {
+      this.fireGasoline(effect.powered)
+    }
+  }
+
+  /**
+   * Detect special shapes: 5-in-a-row, T-shapes, and L-shapes.
+   * Returns a Set of matches that are part of a special shape.
+   */
+  private detectSpecialShapes(matches: Match[]): Set<Match> {
+    const special = new Set<Match>()
+
+    // 5+ in a row is automatically special
+    for (const m of matches) {
+      if (m.cells.length >= 5) {
+        special.add(m)
+      }
+    }
+
+    // T and L shapes: two matches of the same base type that share exactly one cell
+    for (let i = 0; i < matches.length; i++) {
+      for (let j = i + 1; j < matches.length; j++) {
+        const a = matches[i]!
+        const b = matches[j]!
+        if (baseType(a.type) !== baseType(b.type)) continue
+
+        // Check if they share at least one cell (cross/T/L)
+        const aKeys = new Set(a.cells.map(c => `${c.row},${c.col}`))
+        const shared = b.cells.filter(c => aKeys.has(`${c.row},${c.col}`))
+        if (shared.length > 0) {
+          special.add(a)
+          special.add(b)
+        }
+      }
+    }
+
+    return special
   }
 
   private doGravityAndRefill() {
@@ -602,7 +712,7 @@ export class GameScene extends Phaser.Scene {
 
   // ── Combat ───────────────────────────────────────────────────
 
-  private fireBullet(type: TileType) {
+  private fireBullet(type: TileType, powered = false) {
     // Direction vector from bunker
     let dirX = 0
     let dirY = 0
@@ -641,17 +751,18 @@ export class GameScene extends Phaser.Scene {
     inQuadrant.sort((a, b) => a.dist - b.dist)
 
     // Fire at all zombies that aren't blocked by a nearer zombie.
-    // A zombie provides cover if the line from bunker to a farther zombie
-    // passes within the cover zombie's body radius.
+    // Heavy ammo (powered) pierces through cover — hits all zombies in the quadrant.
     const hit: Zombie[] = []
 
     for (const candidate of inQuadrant) {
+      if (powered) {
+        hit.push(candidate.zombie)
+        continue
+      }
       let blocked = false
       for (const blocker of hit) {
-        // Perpendicular distance from blocker to the line (origin → candidate)
         const bx = blocker.x - this.bunkerX
         const by = blocker.y - this.bunkerY
-        // Cross product gives signed area; divide by candidate dist for perp distance
         const cross = Math.abs(bx * candidate.ry - by * candidate.rx)
         const perpDist = cross / candidate.dist
         if (perpDist < blocker.body.radius * 2) {
@@ -665,35 +776,39 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Animate a spread of bullet lines across the quadrant
-    const spread = 0.6 // radians, ~35° half-angle
-    const baseAngle = Math.atan2(dirY, dirX)
+    const spread = 0.6
+    const bAngle = Math.atan2(dirY, dirX)
     const range = MID_Y / 2
-    for (let i = -1; i <= 1; i++) {
-      const angle = baseAngle + i * spread * 0.5
+    const lineCount = powered ? 5 : 3
+    for (let i = 0; i < lineCount; i++) {
+      const angle = bAngle + (i - (lineCount - 1) / 2) * spread / (lineCount - 1)
       const endX = this.bunkerX + Math.cos(angle) * range
       const endY = this.bunkerY + Math.sin(angle) * range
-      this.animateBullet(this.bunkerX, this.bunkerY, endX, endY)
+      this.animateBullet(this.bunkerX, this.bunkerY, endX, endY, powered ? 0xff4444 : 0xffff44)
     }
 
+    const dmg = powered ? HEAVY_BULLET_DAMAGE : BULLET_DAMAGE
     for (const z of hit) {
-      z.takeDamage(BULLET_DAMAGE)
-      console.log(`[Combat] Bullet ${type} hit zombie for ${BULLET_DAMAGE} damage`)
+      z.takeDamage(dmg)
+      console.log(`[Combat] Bullet ${type}${powered ? ' [HEAVY]' : ''} hit zombie for ${dmg} damage`)
       if (z.isDead) {
         this.playDeathEffect(z)
       }
     }
   }
 
-  private fireGrenade() {
+  private fireGrenade(powered = false) {
+    const radius = powered ? ROCKET_RADIUS : GRENADE_RADIUS
+    const damage = powered ? ROCKET_DAMAGE : GRENADE_DAMAGE
+
     if (this.zombies.length === 0) {
-      // No zombies — animate explosion at a random spot
       const rx = 40 + Math.random() * (GAME_WIDTH - 80)
       const ry = 20 + Math.random() * (MID_Y - 40)
-      this.animateExplosion(rx, ry, GRENADE_RADIUS)
+      this.animateExplosion(rx, ry, radius)
       return
     }
 
-    // Find densest cluster: for each zombie, count how many others are within GRENADE_RADIUS
+    // Find densest cluster
     let bestCenter: Zombie = this.zombies[0]!
     let bestCount = 0
 
@@ -704,7 +819,7 @@ export class GameScene extends Phaser.Scene {
         if (other.isDead) continue
         const dx = z.x - other.x
         const dy = z.y - other.y
-        if (Math.sqrt(dx * dx + dy * dy) <= GRENADE_RADIUS) count++
+        if (Math.sqrt(dx * dx + dy * dy) <= radius) count++
       }
       if (count > bestCount) {
         bestCount = count
@@ -712,15 +827,14 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Animate and deal damage
-    this.animateExplosion(bestCenter.x, bestCenter.y, GRENADE_RADIUS)
+    this.animateExplosion(bestCenter.x, bestCenter.y, radius)
 
     for (const z of this.zombies) {
       if (z.isDead) continue
       const dx = bestCenter.x - z.x
       const dy = bestCenter.y - z.y
-      if (Math.sqrt(dx * dx + dy * dy) <= GRENADE_RADIUS) {
-        z.takeDamage(GRENADE_DAMAGE)
+      if (Math.sqrt(dx * dx + dy * dy) <= radius) {
+        z.takeDamage(damage)
         if (z.isDead) {
           this.playDeathEffect(z)
         }
@@ -728,19 +842,54 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private fireGasoline() {
-    // Create a lingering fire zone around the bunker
+  private fireGasoline(powered = false) {
+    const radius = powered ? NAPALM_RADIUS : GASOLINE_RADIUS
+    const duration = powered ? NAPALM_DURATION : GASOLINE_DURATION
+    const dps = powered ? NAPALM_DPS : GASOLINE_DPS
+    const color = powered ? 0xff2200 : 0xff4400
+
     const gfx = this.add
-      .circle(this.bunkerX, this.bunkerY, GASOLINE_RADIUS, 0xff4400, 0.25)
-      .setStrokeStyle(2, 0xff6600, 0.6)
+      .circle(this.bunkerX, this.bunkerY, radius, color, 0.25)
+      .setStrokeStyle(powered ? 3 : 2, 0xff6600, 0.6)
 
     this.fireZones.push({
       x: this.bunkerX,
       y: this.bunkerY,
-      radius: GASOLINE_RADIUS,
-      remaining: GASOLINE_DURATION,
+      radius,
+      remaining: duration,
+      dps,
       gfx,
     })
+  }
+
+  private fireAirstrike() {
+    // Damage all zombies on the battlefield
+    for (const z of this.zombies) {
+      if (z.isDead) continue
+      z.takeDamage(AIRSTRIKE_DAMAGE)
+      if (z.isDead) {
+        this.playDeathEffect(z)
+      }
+    }
+
+    // Screen-wide flash effect
+    const flash = this.add.rectangle(GAME_WIDTH / 2, MID_Y / 2, GAME_WIDTH, MID_Y, 0xffffff, 0.6)
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => flash.destroy(),
+    })
+
+    // Scatter explosion effects across the battlefield
+    for (let i = 0; i < 5; i++) {
+      this.time.delayedCall(i * 80, () => {
+        const ex = 30 + Math.random() * (GAME_WIDTH - 60)
+        const ey = 20 + Math.random() * (MID_Y - 40)
+        this.animateExplosion(ex, ey, 40)
+      })
+    }
   }
 
   private updateFireZones(deltaMs: number, dt: number) {
@@ -770,7 +919,7 @@ export class GameScene extends Phaser.Scene {
         const dx = z.x - zone.x
         const dy = z.y - zone.y
         if (Math.sqrt(dx * dx + dy * dy) <= zone.radius) {
-          z.takeDamage(GASOLINE_DPS * dt)
+          z.takeDamage(zone.dps * dt)
           if (z.isDead) {
             this.playDeathEffect(z)
           }
@@ -779,8 +928,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private animateBullet(fromX: number, fromY: number, toX: number, toY: number) {
-    const line = this.add.line(0, 0, fromX, fromY, toX, toY, 0xffff44, 1).setOrigin(0, 0)
+  private animateBullet(fromX: number, fromY: number, toX: number, toY: number, color = 0xffff44) {
+    const line = this.add.line(0, 0, fromX, fromY, toX, toY, color, 1).setOrigin(0, 0)
     line.setLineWidth(2)
 
     this.tweens.add({

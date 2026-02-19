@@ -1,4 +1,4 @@
-import { TileType, ALL_TILE_TYPES } from './TileType'
+import { TileType, ALL_TILE_TYPES, baseType } from './TileType'
 
 export const GRID_COLS = 7
 export const GRID_ROWS = 7
@@ -74,7 +74,11 @@ export class Board {
     }
   }
 
-  /** Find all horizontal and vertical runs of 3+ matching tiles. */
+  /**
+   * Find all horizontal and vertical runs of 3+ matching tiles.
+   * Powered-up tiles match their base type (e.g. HeavyN matches BulletN).
+   * Airstrike is wild — it matches any adjacent base type.
+   */
   findMatches(): Match[] {
     const matches: Match[] = []
 
@@ -82,14 +86,24 @@ export class Board {
     for (let row = 0; row < GRID_ROWS; row++) {
       let col = 0
       while (col < GRID_COLS) {
-        const t = this.get(row, col)
-        if (!t) { col++; continue }
+        const raw = this.get(row, col)
+        if (!raw) { col++; continue }
+        const bt = baseType(raw)
         let end = col + 1
-        while (end < GRID_COLS && this.get(row, end) === t) end++
+        while (end < GRID_COLS) {
+          const next = this.get(row, end)
+          if (!next) break
+          if (next === TileType.Airstrike || baseType(next) === bt || raw === TileType.Airstrike) {
+            // If the run started with Airstrike, lock to the first non-airstrike base type
+            end++
+          } else {
+            break
+          }
+        }
         if (end - col >= 3) {
           const cells = []
           for (let c = col; c < end; c++) cells.push({ row, col: c })
-          matches.push({ type: t, cells })
+          matches.push({ type: bt === TileType.Airstrike ? this.resolveRunType(cells) : bt, cells })
         }
         col = end
       }
@@ -99,20 +113,38 @@ export class Board {
     for (let col = 0; col < GRID_COLS; col++) {
       let row = 0
       while (row < GRID_ROWS) {
-        const t = this.get(row, col)
-        if (!t) { row++; continue }
+        const raw = this.get(row, col)
+        if (!raw) { row++; continue }
+        const bt = baseType(raw)
         let end = row + 1
-        while (end < GRID_ROWS && this.get(end, col) === t) end++
+        while (end < GRID_ROWS) {
+          const next = this.get(end, col)
+          if (!next) break
+          if (next === TileType.Airstrike || baseType(next) === bt || raw === TileType.Airstrike) {
+            end++
+          } else {
+            break
+          }
+        }
         if (end - row >= 3) {
           const cells = []
           for (let r = row; r < end; r++) cells.push({ row: r, col })
-          matches.push({ type: t, cells })
+          matches.push({ type: bt === TileType.Airstrike ? this.resolveRunType(cells) : bt, cells })
         }
         row = end
       }
     }
 
     return matches
+  }
+
+  /** For a run that started with Airstrike, find the first non-airstrike base type. */
+  private resolveRunType(cells: { row: number; col: number }[]): TileType {
+    for (const c of cells) {
+      const t = this.get(c.row, c.col)
+      if (t && t !== TileType.Airstrike) return baseType(t)
+    }
+    return TileType.Airstrike
   }
 
   /**
