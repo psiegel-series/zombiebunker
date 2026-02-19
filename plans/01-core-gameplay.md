@@ -12,19 +12,19 @@ Set up the Vite + Phaser 3 project, integrate the rundot SDK, and get a blank ga
 
 ### Tasks
 
-- [ ] Initialize a Vite project with TypeScript in the repo root
-- [ ] Install Phaser 3 and the rundot game SDK (`@series-inc/rundot-game-sdk`)
-- [ ] Configure `vite.config.ts` with `base: './'` for rundot compatibility
-- [ ] Create the Phaser game config: portrait dimensions (e.g. 390x844), pixel art rendering settings (`pixelArt: true`, `roundPixels: true`), transparent or solid background
-- [ ] Create a `BootScene` that imports the rundot SDK and logs a message to confirm SDK init
-- [ ] Register rundot lifecycle hooks (onPause/onResume) to pause/resume the Phaser game loop
-- [ ] Verify `npm run dev` launches the game in a browser with a colored background filling the canvas
+- [x] Initialize a Vite project with TypeScript in the repo root
+- [x] Install Phaser 3 and the rundot game SDK (`@series-inc/rundot-game-sdk`)
+- [x] Configure `vite.config.ts` with `base: './'` for rundot compatibility
+- [x] Create the Phaser game config: portrait dimensions (e.g. 390x844), pixel art rendering settings (`pixelArt: true`, `roundPixels: true`), transparent or solid background
+- [x] Create a `BootScene` that imports the rundot SDK and logs a message to confirm SDK init
+- [x] Register rundot lifecycle hooks (onPause/onResume) to pause/resume the Phaser game loop
+- [x] Verify `npm run dev` launches the game in a browser with a colored background filling the canvas
 
 ### Tests
 
-- [ ] Running `npm run dev` opens a browser tab with a solid-colored Phaser canvas in portrait aspect ratio
-- [ ] Browser console shows the rundot SDK init log message (or no SDK errors if running outside run.game)
-- [ ] No errors in the browser console
+- [x] Running `npm run dev` opens a browser tab with a solid-colored Phaser canvas in portrait aspect ratio
+- [x] Browser console shows the rundot SDK init log message (or no SDK errors if running outside run.game)
+- [x] No errors in the browser console
 
 ---
 
