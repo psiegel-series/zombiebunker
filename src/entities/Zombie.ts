@@ -25,7 +25,7 @@ const ZOMBIE_CONFIGS: Record<ZombieType, ZombieConfig> = {
   },
   [ZombieType.Runner]: {
     hp: 12,
-    speed: 15,
+    speed: 18,
     color: 0xcccc33,
     radius: 8,
     damage: 8,

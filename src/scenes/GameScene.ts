@@ -4,6 +4,7 @@ import { TileType, TILE_COLORS, TILE_LABELS, baseType, isPoweredUp, poweredType 
 import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
 import { Zombie, ZombieType } from '../entities/Zombie'
 import { WaveManager } from '../waves/WaveManager'
+import { submitScore } from '../rundot'
 
 export const GAME_WIDTH = 390
 export const GAME_HEIGHT = 844
@@ -37,6 +38,14 @@ const MEGA_MEDKIT_HEAL = 40
 const AIRSTRIKE_DAMAGE = 50
 const DEATH_DURATION = 150
 
+const SCORE_PER_ZOMBIE: Record<ZombieType, number> = {
+  [ZombieType.Walker]: 10,
+  [ZombieType.Runner]: 15,
+  [ZombieType.Tank]: 30,
+  [ZombieType.Boss]: 100,
+}
+const SCORE_PER_WAVE = 50
+
 interface TileSprite {
   bg: Phaser.GameObjects.Rectangle
   label: Phaser.GameObjects.Text
@@ -69,6 +78,10 @@ export class GameScene extends Phaser.Scene {
   private waveManager!: WaveManager
   private waveText!: Phaser.GameObjects.Text
   private waveMessageText!: Phaser.GameObjects.Text
+  private score = 0
+  private scoreText!: Phaser.GameObjects.Text
+  private gameOver = false
+  private gameStartTime = 0
 
   // Drag state
   private dragging = false
@@ -89,6 +102,11 @@ export class GameScene extends Phaser.Scene {
     this.board = new Board()
     this.animating = false
     this.bunkerHp = BUNKER_MAX_HP
+    this.score = 0
+    this.gameOver = false
+    this.gameStartTime = Date.now()
+    this.zombies = []
+    this.fireZones = []
     this.drawBattlefield()
     this.drawBunker()
     this.drawHpBar()
@@ -109,7 +127,15 @@ export class GameScene extends Phaser.Scene {
       this.applyDamage(15)
     })
 
-    // Wave HUD
+    // HUD
+    this.scoreText = this.add
+      .text(GAME_WIDTH - 10, 10, '0', {
+        fontSize: '16px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+      })
+      .setOrigin(1, 0)
+
     this.waveText = this.add
       .text(10, 10, 'Wave 1', {
         fontSize: '16px',
@@ -135,6 +161,7 @@ export class GameScene extends Phaser.Scene {
         this.showWaveMessage(`Wave ${num}`)
       },
       onWaveComplete: (num) => {
+        this.addScore(SCORE_PER_WAVE)
         this.showWaveMessage(`Wave ${num} Complete!`)
       },
     })
@@ -142,6 +169,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    if (this.gameOver) return
     const dt = delta / 1000
     this.updateZombies(dt)
     this.updateFireZones(delta, dt)
@@ -193,9 +221,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   applyDamage(amount: number) {
+    if (this.gameOver) return
     this.bunkerHp = Math.max(0, this.bunkerHp - amount)
     this.updateHpBar()
     console.log(`[Bunker] Took ${amount} damage, HP: ${this.bunkerHp}/${BUNKER_MAX_HP}`)
+    if (this.bunkerHp <= 0) {
+      this.triggerGameOver()
+    }
   }
 
   private applyHeal(amount: number) {
@@ -714,9 +746,11 @@ export class GameScene extends Phaser.Scene {
 
   private updateZombies(dt: number) {
     for (let i = this.zombies.length - 1; i >= 0; i--) {
+      if (this.gameOver) return
       const zombie = this.zombies[i]!
 
       if (zombie.isDead) {
+        this.addScore(SCORE_PER_ZOMBIE[zombie.type])
         zombie.destroy()
         this.zombies.splice(i, 1)
         continue
@@ -999,6 +1033,96 @@ export class GameScene extends Phaser.Scene {
       targets: [zombie.hpBar, zombie.hpBarBg],
       alpha: 0,
       duration: DEATH_DURATION,
+    })
+  }
+
+  private addScore(points: number) {
+    this.score += points
+    this.scoreText.setText(String(this.score))
+  }
+
+  private triggerGameOver() {
+    if (this.gameOver) return
+    this.gameOver = true
+    this.animating = true // block input
+
+    // Clean up remaining zombies visually
+    for (const z of this.zombies) z.destroy()
+    this.zombies = []
+    for (const fz of this.fireZones) fz.gfx.destroy()
+    this.fireZones = []
+
+    const duration = Math.floor((Date.now() - this.gameStartTime) / 1000)
+    const wave = this.waveManager.currentWave
+
+    // Brief pause, then show game over screen
+    this.time.delayedCall(500, () => {
+      this.showGameOverScreen(wave, duration)
+    })
+  }
+
+  private showGameOverScreen(wave: number, duration: number) {
+    // Dark overlay
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75)
+
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, 'GAME OVER', {
+        fontSize: '32px',
+        fontFamily: 'monospace',
+        color: '#ff4444',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, [
+        `Score: ${this.score}`,
+        `Wave: ${wave}`,
+      ].join('\n'), {
+        fontSize: '20px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+
+    const rankText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, 'Submitting score...', {
+        fontSize: '16px',
+        fontFamily: 'monospace',
+        color: '#aaaaaa',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+
+    // Submit score
+    submitScore(this.score, duration, { wave }).then((result) => {
+      if (result.rank) {
+        rankText.setText(`Rank: #${result.rank}`)
+        rankText.setColor('#ffcc00')
+      } else {
+        rankText.setText('Play on run.game for leaderboard!')
+      }
+    })
+
+    // Play Again button
+    const btnBg = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, 180, 44, 0x336633)
+      .setStrokeStyle(2, 0x66cc66)
+      .setInteractive({ useHandCursor: true })
+
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, 'Play Again', {
+        fontSize: '18px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+
+    btnBg.on('pointerover', () => btnBg.setFillStyle(0x448844))
+    btnBg.on('pointerout', () => btnBg.setFillStyle(0x336633))
+    btnBg.on('pointerdown', () => {
+      this.scene.restart()
     })
   }
 

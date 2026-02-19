@@ -315,21 +315,21 @@ Track score, handle game over when bunker HP hits zero, submit to the rundot lea
 
 ### Tasks
 
-- [ ] Track score: +points per zombie killed (vary by type), +bonus per wave survived
-- [ ] Display score on the HUD
-- [ ] When bunker HP reaches 0, stop the game loop and show a "Game Over" screen with final score and wave reached
-- [ ] Add a "Play Again" button on the game over screen that resets all state and starts fresh
-- [ ] Create a `config.json` in project root with leaderboard settings (simple mode, `requiresToken: false`)
-- [ ] On game over, submit the score to the rundot Leaderboard API
-- [ ] Display the player's rank from the submission response on the game over screen
+- [x] Track score: +points per zombie killed (vary by type), +bonus per wave survived
+- [x] Display score on the HUD
+- [x] When bunker HP reaches 0, stop the game loop and show a "Game Over" screen with final score and wave reached
+- [x] Add a "Play Again" button on the game over screen that resets all state and starts fresh
+- [x] Create a `config.json` in project root with leaderboard settings (simple mode, `requiresToken: false`)
+- [x] On game over, submit the score to the rundot Leaderboard API
+- [x] Display the player's rank from the submission response on the game over screen
 
 ### Tests
 
-- [ ] Score increases when zombies are killed
-- [ ] Score is visible on screen during gameplay
-- [ ] When the bunker is destroyed, a Game Over screen appears showing the final score and wave number
-- [ ] The "Play Again" button resets everything: full HP, wave 1, score 0, fresh board
-- [ ] After game over, the leaderboard submission happens (check console for API call if not on run.game, or verify rank display if on platform)
+- [x] Score increases when zombies are killed
+- [x] Score is visible on screen during gameplay
+- [x] When the bunker is destroyed, a Game Over screen appears showing the final score and wave number
+- [x] The "Play Again" button resets everything: full HP, wave 1, score 0, fresh board
+- [x] After game over, the leaderboard submission happens (check console for API call if not on run.game, or verify rank display if on platform)
 
 ---
 
