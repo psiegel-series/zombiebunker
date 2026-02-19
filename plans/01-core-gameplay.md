@@ -80,24 +80,24 @@ Replace the tap-to-swap input with drag-to-slide. The player drags a row horizon
 ### Tasks
 
 - [x] ~~(Old) Tap-to-swap implementation~~ — to be replaced
-- [ ] On pointer down on a tile, begin tracking drag direction (horizontal = row slide, vertical = column slide). Lock to one axis after a small threshold.
-- [ ] While dragging, shift the entire row or column by the drag delta. Tiles wrap around: a tile sliding off one edge appears on the opposite edge.
-- [ ] Update tile display positions in real time as the player drags (smooth, pixel-level movement)
-- [ ] While dragging, run match detection on the current board state and highlight matched tiles (pulsing glow or bright border)
-- [ ] Snap tiles to the nearest whole-cell position on release
-- [ ] On release, if matches exist at the snapped position, commit the board state and trigger match clearing
-- [ ] On release, if no matches exist, animate tiles snapping back to their original positions (invalid move)
-- [ ] Remove the old tap-to-swap and selection highlight code
+- [x] On pointer down on a tile, begin tracking drag direction (horizontal = row slide, vertical = column slide). Lock to one axis after a small threshold.
+- [x] While dragging, shift the entire row or column by the drag delta. Tiles wrap around: a tile sliding off one edge appears on the opposite edge.
+- [x] Update tile display positions in real time as the player drags (smooth, pixel-level movement)
+- [x] While dragging, run match detection on the current board state and highlight matched tiles (pulsing glow or bright border)
+- [x] Snap tiles to the nearest whole-cell position on release
+- [x] On release, if matches exist at the snapped position, commit the board state and trigger match clearing
+- [x] On release, if no matches exist, animate tiles snapping back to their original positions (invalid move)
+- [x] Remove the old tap-to-swap and selection highlight code
 
 ### Tests
 
-- [ ] Dragging a tile horizontally shifts the entire row, with tiles wrapping around the edges
-- [ ] Dragging a tile vertically shifts the entire column, with tiles wrapping around the edges
-- [ ] While dragging, matched tiles are visually highlighted in real time
-- [ ] On release, tiles snap to the nearest cell position
-- [ ] If matches exist on release, they clear and cascade as normal
-- [ ] If no matches exist on release, tiles snap back to their original positions
-- [ ] Dragging feels smooth and responsive — tiles follow the pointer in real time
+- [x] Dragging a tile horizontally shifts the entire row, with tiles wrapping around the edges
+- [x] Dragging a tile vertically shifts the entire column, with tiles wrapping around the edges
+- [x] While dragging, matched tiles are visually highlighted in real time
+- [x] On release, tiles snap to the nearest cell position
+- [x] If matches exist on release, they clear and cascade as normal
+- [x] If no matches exist on release, tiles snap back to their original positions
+- [x] Dragging feels smooth and responsive — tiles follow the pointer in real time
 
 ---
 

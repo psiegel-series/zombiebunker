@@ -32,34 +32,46 @@ export class Board {
     this.set(r2, c2, tmp)
   }
 
-  /** Check if swapping two cells would produce a match involving either cell. Does not mutate the board. */
-  wouldMatch(r1: number, c1: number, r2: number, c2: number): boolean {
-    this.swap(r1, c1, r2, c2)
-    const hasMatch = this.findMatchesAt(r1, c1) || this.findMatchesAt(r2, c2)
-    this.swap(r1, c1, r2, c2)
-    return hasMatch
+  /** Shift a row by `offset` positions (positive = right, negative = left). Wraps around. */
+  shiftRow(row: number, offset: number) {
+    // Normalize to positive modulo
+    const n = GRID_COLS
+    const shift = ((offset % n) + n) % n
+    if (shift === 0) return
+
+    const original = this.cells[row]!.slice()
+    for (let col = 0; col < n; col++) {
+      this.cells[row]![(col + shift) % n] = original[col]!
+    }
   }
 
-  /** Check if a specific cell is part of a 3+ run horizontally or vertically. */
-  private findMatchesAt(row: number, col: number): boolean {
-    const t = this.get(row, col)
-    if (!t) return false
+  /** Shift a column by `offset` positions (positive = down, negative = up). Wraps around. */
+  shiftColumn(col: number, offset: number) {
+    const n = GRID_ROWS
+    const shift = ((offset % n) + n) % n
+    if (shift === 0) return
 
-    // Horizontal run through (row, col)
-    let left = col
-    while (left > 0 && this.get(row, left - 1) === t) left--
-    let right = col
-    while (right < GRID_COLS - 1 && this.get(row, right + 1) === t) right++
-    if (right - left + 1 >= 3) return true
+    const original: (TileType | null)[] = []
+    for (let row = 0; row < n; row++) {
+      original.push(this.get(row, col))
+    }
+    for (let row = 0; row < n; row++) {
+      this.set((row + shift) % n, col, original[row]!)
+    }
+  }
 
-    // Vertical run through (row, col)
-    let top = row
-    while (top > 0 && this.get(top - 1, col) === t) top--
-    let bottom = row
-    while (bottom < GRID_ROWS - 1 && this.get(bottom + 1, col) === t) bottom++
-    if (bottom - top + 1 >= 3) return true
+  /** Get a snapshot of the current board state for later restoration. */
+  snapshot(): (TileType | null)[][] {
+    return this.cells.map((row) => row.slice())
+  }
 
-    return false
+  /** Restore the board to a previous snapshot. */
+  restore(snapshot: (TileType | null)[][]) {
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        this.cells[row]![col] = snapshot[row]![col]!
+      }
+    }
   }
 
   /** Find all horizontal and vertical runs of 3+ matching tiles. */
