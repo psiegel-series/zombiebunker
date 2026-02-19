@@ -12,6 +12,8 @@ export const GRID_TOTAL = CELL_SIZE + CELL_GAP
 
 const SWAP_DURATION = 150
 const CLEAR_DURATION = 200
+const FALL_DURATION_PER_ROW = 80
+const CASCADE_PAUSE = 150
 
 interface TileSprite {
   bg: Phaser.GameObjects.Rectangle
@@ -60,18 +62,6 @@ export class GameScene extends Phaser.Scene {
     const cy = MID_Y / 2
 
     this.add.rectangle(cx, cy, 48, 48, 0x4a4a6a).setStrokeStyle(2, 0x8888aa)
-
-    const g = this.add.graphics()
-    const tipY = cy - 24 - 28
-    g.fillStyle(0xcc4444)
-    g.lineStyle(1, 0xff6666)
-    g.beginPath()
-    g.moveTo(cx, tipY)
-    g.lineTo(cx + 10, cy - 24)
-    g.lineTo(cx - 10, cy - 24)
-    g.closePath()
-    g.fillPath()
-    g.strokePath()
   }
 
   private createTiles() {
@@ -217,8 +207,67 @@ export class GameScene extends Phaser.Scene {
             this.tiles[row]![col] = null
           }
         }
-        this.animating = false
+        this.doGravityAndRefill()
       },
+    })
+  }
+
+  private doGravityAndRefill() {
+    const moves = this.board.applyGravity()
+
+    // Animate existing tiles falling down
+    let maxFallDuration = 0
+    for (const move of moves) {
+      const tile = this.tiles[move.fromRow]![move.col]!
+      this.tiles[move.fromRow]![move.col] = null
+      this.tiles[move.toRow]![move.col] = tile
+
+      const target = gridPos(move.toRow, move.col)
+      const duration = (move.toRow - move.fromRow) * FALL_DURATION_PER_ROW
+      maxFallDuration = Math.max(maxFallDuration, duration)
+
+      this.tweens.add({
+        targets: [tile.bg, tile.label],
+        y: target.y,
+        duration,
+        ease: 'Bounce.easeOut',
+      })
+    }
+
+    // After gravity, fill empty cells at the top
+    this.time.delayedCall(maxFallDuration, () => {
+      this.spawnNewTiles()
+    })
+  }
+
+  private spawnNewTiles() {
+    const fills = this.board.fillEmpty()
+
+    let maxDuration = 0
+    for (const fill of fills) {
+      const tile = this.createTileAt(fill.row, fill.col, fill.type)
+      this.tiles[fill.row]![fill.col] = tile
+
+      // Start above the grid and fall into place
+      const target = gridPos(fill.row, fill.col)
+      const spawnY = gridPos(0, fill.col).y - GRID_TOTAL
+      tile.bg.setY(spawnY)
+      tile.label.setY(spawnY)
+
+      const duration = (fill.row + 1) * FALL_DURATION_PER_ROW
+      maxDuration = Math.max(maxDuration, duration)
+
+      this.tweens.add({
+        targets: [tile.bg, tile.label],
+        y: target.y,
+        duration,
+        ease: 'Bounce.easeOut',
+      })
+    }
+
+    // After refill, check for cascades
+    this.time.delayedCall(maxDuration + CASCADE_PAUSE, () => {
+      this.clearMatches()
     })
   }
 

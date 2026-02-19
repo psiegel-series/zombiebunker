@@ -120,42 +120,41 @@ After matches clear, tiles fall down to fill gaps and new tiles spawn at the top
 
 ### Tasks
 
-- [ ] After clearing, make remaining tiles fall down to fill empty cells below them (animate the fall)
-- [ ] Fill empty cells at the top of each column with new random tiles (animate them dropping in)
-- [ ] After refill, re-run match detection on the full board
-- [ ] If new matches exist, clear them and repeat the gravity/refill cycle
-- [ ] Continue cascading until the board stabilizes with no matches
-- [ ] Add a brief delay between each cascade step so the player can see what's happening
+- [x] After clearing, make remaining tiles fall down to fill empty cells below them (animate the fall)
+- [x] Fill empty cells at the top of each column with new random tiles (animate them dropping in)
+- [x] After refill, re-run match detection on the full board
+- [x] If new matches exist, clear them and repeat the gravity/refill cycle
+- [x] Continue cascading until the board stabilizes with no matches
+- [x] Add a brief delay between each cascade step so the player can see what's happening
 
 ### Tests
 
-- [ ] After a match clears, tiles above the gap slide down smoothly
-- [ ] New tiles appear at the top of columns and fall into empty spaces
-- [ ] If falling tiles create new 3+ matches, those matches auto-clear without player input
-- [ ] Cascades can chain multiple times (create a scenario where this happens — may take several tries)
-- [ ] The board always ends in a stable state with no remaining matches and no empty cells
+- [x] After a match clears, tiles above the gap slide down smoothly
+- [x] New tiles appear at the top of columns and fall into empty spaces
+- [x] If falling tiles create new 3+ matches, those matches auto-clear without player input
+- [x] Cascades can chain multiple times (create a scenario where this happens — may take several tries)
+- [x] The board always ends in a stable state with no remaining matches and no empty cells
 
 ---
 
-## Phase 7 — Turret Rotation
+## Phase 7 — Match Effect Dispatch
 
-CW and CCW tile matches rotate the turret on the battlefield. Turret direction is visually reflected.
+Wire up the match-clearing system to dispatch tile effects. No battlefield targets yet (that comes with zombies), but the framework for handling each tile type's effect is in place.
 
 ### Tasks
 
-- [ ] Add turret direction state to the game (starts facing North)
-- [ ] When a CW match clears, rotate the turret 90 degrees clockwise (N→E→S→W→N)
-- [ ] When a CCW match clears, rotate the turret 90 degrees counterclockwise (N→W→S→E→N)
-- [ ] Animate the turret rotation on the bunker sprite in the top half
-- [ ] If multiple CW or CCW matches clear in one cascade, apply each rotation in sequence
-- [ ] Display the current turret direction as text (e.g. "N", "E", "S", "W") near the bunker as a debug aid
+- [ ] After each match clears, identify the tile type and log the effect that would fire (e.g., "Bullet N fired", "Grenade launched", "Gasoline burst", "Medkit heal")
+- [ ] Create an event emitter or callback system so GameScene can react to match effects
+- [ ] Distinguish between the 4 bullet directions in the effect dispatch
+- [ ] Grenade effect should note "targets densest cluster" (actual targeting comes in phase 10)
+- [ ] Gasoline effect should note "damages nearby zombies" (actual damage comes in phase 11)
+- [ ] Medkit effect is wired into bunker HP (implemented in phase 8)
 
 ### Tests
 
-- [ ] Making a match of CW tiles causes the turret indicator on the bunker to rotate clockwise
-- [ ] Making a match of CCW tiles causes the turret indicator to rotate counterclockwise
-- [ ] The direction label near the bunker updates correctly after each rotation
-- [ ] Multiple rotation matches in a cascade compound (e.g., two CW matches = 180 degree turn)
+- [ ] Making a match of any tile type logs the correct effect name in the browser console
+- [ ] Bullet N, S, E, W matches each log their specific direction
+- [ ] Multiple matches in a single cascade each log their own effect independently
 
 ---
 
@@ -208,25 +207,24 @@ Spawn zombies at the edges of the battlefield and have them walk toward the bunk
 
 ## Phase 10 — Bullet & Grenade Combat
 
-Bullet and Grenade matches fire at zombies. Bullets hit the nearest zombie in the turret's direction. Grenades explode in an area.
+Directional bullet matches fire at zombies in that direction. Grenade matches auto-target the densest zombie cluster.
 
 ### Tasks
 
-- [ ] When a Bullet match clears, find the nearest zombie(s) in the turret's facing direction and deal damage
-- [ ] Animate a bullet projectile or flash effect from the bunker toward the target
-- [ ] When a Grenade match clears, determine the target area (middle of the quadrant the turret faces) and deal area damage to all zombies in a radius
+- [ ] When a Bullet N/S/E/W match clears, find the nearest zombie(s) in that fixed direction from the bunker and deal damage
+- [ ] Animate a bullet projectile or flash effect from the bunker in the bullet's direction
+- [ ] When a Grenade match clears, find the densest cluster of zombies on the battlefield and launch a grenade at that area
 - [ ] Animate a grenade arc or explosion effect at the target area
 - [ ] When a zombie's HP reaches 0, play a death animation and remove it
-- [ ] Matching Boxes does nothing (confirm this is already the case)
 
 ### Tests
 
-- [ ] Making a Bullet match with the turret facing zombies causes a visible projectile effect and damages/kills the nearest zombie
-- [ ] Making a Bullet match facing a direction with no zombies fires into empty space (no crash, visual still plays)
-- [ ] Making a Grenade match shows an explosion in the turret's facing quadrant
-- [ ] Grenade explosion damages multiple zombies if they are clustered in that area
+- [ ] Making a Bullet N match fires northward and damages/kills the nearest zombie to the north
+- [ ] Making a Bullet E match fires eastward — confirming each direction works independently
+- [ ] Making a Bullet match in a direction with no zombies fires into empty space (no crash, visual still plays)
+- [ ] Making a Grenade match shows an explosion at the densest group of zombies
+- [ ] Grenade explosion damages multiple zombies if they are clustered together
 - [ ] Killed zombies visually disappear from the battlefield
-- [ ] Box matches clear from the board but produce no battlefield effect
 
 ---
 
@@ -245,7 +243,6 @@ Gasoline matches damage zombies near the bunker, regardless of turret direction.
 - [ ] Making a Gasoline match when zombies are close to the bunker damages/kills them
 - [ ] The fire effect appears around the bunker, not in a specific direction
 - [ ] Zombies far from the bunker are unaffected by Gasoline
-- [ ] Gasoline works the same regardless of which direction the turret is facing
 
 ---
 
@@ -257,7 +254,7 @@ Implement powered-up tiles from 4-matches and Airstrike tiles from 5-match/T/L s
 
 - [ ] Detect 4-in-a-row matches: instead of clearing all 4, clear 3 and leave behind a powered-up tile in the 4th position
 - [ ] Visually distinguish powered-up tiles (glow, border, or different shade)
-- [ ] Implement powered-up effects when a powered-up tile is later matched: Heavy Ammo (piercing line), Rocket (big explosion), Napalm (lingering fire — visual only for now, damage over time can be simplified), Mega-Medkit (large heal)
+- [ ] Implement powered-up effects when a powered-up tile is later matched: Heavy Ammo (piercing shot hitting multiple zombies in that direction), Rocket (bigger explosion radius), Napalm (lingering fire — visual only for now, damage over time can be simplified), Mega-Medkit (large heal)
 - [ ] Detect 5-in-a-row, T-shape, and L-shape formations
 - [ ] When these special shapes match, clear the tiles and leave behind an Airstrike tile
 - [ ] Visually distinguish Airstrike tiles (unique color or icon)
@@ -268,7 +265,7 @@ Implement powered-up tiles from 4-matches and Airstrike tiles from 5-match/T/L s
 
 - [ ] Making a 4-in-a-row match leaves behind a special powered-up tile instead of clearing all 4
 - [ ] Powered-up tiles look visually distinct from normal tiles
-- [ ] Matching a powered-up Bullet tile fires a piercing shot that hits multiple zombies
+- [ ] Matching a powered-up Bullet tile fires a piercing shot that hits multiple zombies in that direction
 - [ ] Matching a powered-up Grenade tile creates a larger explosion than normal
 - [ ] Matching a powered-up Medkit tile heals significantly more than a normal Medkit match
 - [ ] Making a 5-in-a-row match produces an Airstrike tile
@@ -334,7 +331,7 @@ Replace all placeholder graphics with pixel art, add sound effects, and tune gam
 
 ### Tasks
 
-- [ ] Create or source pixel art sprites for: bunker, turret (4 directions), 7 tile types, powered-up tile variants, airstrike tile
+- [ ] Create or source pixel art sprites for: bunker, 7 tile types (4 directional bullets + grenade + gasoline + medkit), powered-up tile variants, airstrike tile
 - [ ] Create or source pixel art sprites for: Walker, Runner, Tank, Boss zombies
 - [ ] Create or source pixel art effects for: bullet, grenade explosion, gasoline fire, airstrike, zombie death
 - [ ] Replace all placeholder rectangles and circles with sprites

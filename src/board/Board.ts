@@ -103,6 +103,50 @@ export class Board {
     return matches
   }
 
+  /**
+   * Apply gravity: for each column, shift tiles down to fill nulls.
+   * Returns a list of moves: { col, fromRow, toRow } for animation.
+   */
+  applyGravity(): { col: number; fromRow: number; toRow: number }[] {
+    const moves: { col: number; fromRow: number; toRow: number }[] = []
+
+    for (let col = 0; col < GRID_COLS; col++) {
+      let writeRow = GRID_ROWS - 1
+      for (let readRow = GRID_ROWS - 1; readRow >= 0; readRow--) {
+        if (this.get(readRow, col) !== null) {
+          if (readRow !== writeRow) {
+            this.set(writeRow, col, this.get(readRow, col))
+            this.set(readRow, col, null)
+            moves.push({ col, fromRow: readRow, toRow: writeRow })
+          }
+          writeRow--
+        }
+      }
+    }
+
+    return moves
+  }
+
+  /**
+   * Fill null cells at the top of each column with random tiles.
+   * Returns a list of { row, col, type } for animation.
+   */
+  fillEmpty(): { row: number; col: number; type: TileType }[] {
+    const fills: { row: number; col: number; type: TileType }[] = []
+
+    for (let col = 0; col < GRID_COLS; col++) {
+      for (let row = 0; row < GRID_ROWS; row++) {
+        if (this.get(row, col) === null) {
+          const type = ALL_TILE_TYPES[Math.floor(Math.random() * ALL_TILE_TYPES.length)]!
+          this.set(row, col, type)
+          fills.push({ row, col, type })
+        }
+      }
+    }
+
+    return fills
+  }
+
   private fillWithoutMatches() {
     for (let row = 0; row < GRID_ROWS; row++) {
       for (let col = 0; col < GRID_COLS; col++) {
