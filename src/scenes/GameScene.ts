@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { Board, GRID_COLS, GRID_ROWS } from '../board/Board'
 import { TileType, TILE_COLORS, TILE_LABELS } from '../board/TileType'
+import { dispatchMatchEffects } from '../board/MatchEffects'
 
 export const GAME_WIDTH = 390
 export const GAME_HEIGHT = 844
@@ -171,6 +172,9 @@ export class GameScene extends Phaser.Scene {
       this.animating = false
       return
     }
+
+    // Dispatch effects for each match
+    dispatchMatchEffects(matches)
 
     // Deduplicate cells across overlapping matches
     const toClear = new Set<string>()

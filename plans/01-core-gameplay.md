@@ -143,18 +143,18 @@ Wire up the match-clearing system to dispatch tile effects. No battlefield targe
 
 ### Tasks
 
-- [ ] After each match clears, identify the tile type and log the effect that would fire (e.g., "Bullet N fired", "Grenade launched", "Gasoline burst", "Medkit heal")
-- [ ] Create an event emitter or callback system so GameScene can react to match effects
-- [ ] Distinguish between the 4 bullet directions in the effect dispatch
-- [ ] Grenade effect should note "targets densest cluster" (actual targeting comes in phase 10)
-- [ ] Gasoline effect should note "damages nearby zombies" (actual damage comes in phase 11)
-- [ ] Medkit effect is wired into bunker HP (implemented in phase 8)
+- [x] After each match clears, identify the tile type and log the effect that would fire (e.g., "Bullet N fired", "Grenade launched", "Gasoline burst", "Medkit heal")
+- [x] Create an event emitter or callback system so GameScene can react to match effects
+- [x] Distinguish between the 4 bullet directions in the effect dispatch
+- [x] Grenade effect should note "targets densest cluster" (actual targeting comes in phase 10)
+- [x] Gasoline effect should note "damages nearby zombies" (actual damage comes in phase 11)
+- [x] Medkit effect is wired into bunker HP (implemented in phase 8)
 
 ### Tests
 
-- [ ] Making a match of any tile type logs the correct effect name in the browser console
-- [ ] Bullet N, S, E, W matches each log their specific direction
-- [ ] Multiple matches in a single cascade each log their own effect independently
+- [x] Making a match of any tile type logs the correct effect name in the browser console
+- [x] Bullet N, S, E, W matches each log their specific direction
+- [x] Multiple matches in a single cascade each log their own effect independently
 
 ---
 
