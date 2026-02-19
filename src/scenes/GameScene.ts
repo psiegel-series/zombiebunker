@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import { Board, GRID_COLS, GRID_ROWS } from '../board/Board'
 import { TileType, TILE_COLORS, TILE_LABELS } from '../board/TileType'
-import { dispatchMatchEffects } from '../board/MatchEffects'
+import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
 
 export const GAME_WIDTH = 390
 export const GAME_HEIGHT = 844
@@ -11,6 +11,8 @@ export const CELL_SIZE = 44
 export const CELL_GAP = 4
 export const GRID_TOTAL = CELL_SIZE + CELL_GAP
 
+const BUNKER_MAX_HP = 100
+const MEDKIT_HEAL = 10
 const SWAP_DURATION = 150
 const CLEAR_DURATION = 200
 const FALL_DURATION_PER_ROW = 80
@@ -27,6 +29,9 @@ export class GameScene extends Phaser.Scene {
   private selected: { row: number; col: number } | null = null
   private selectionHighlight!: Phaser.GameObjects.Rectangle
   private animating = false
+  private bunkerHp = BUNKER_MAX_HP
+  private hpBarFill!: Phaser.GameObjects.Rectangle
+  private hpBarBg!: Phaser.GameObjects.Rectangle
 
   constructor() {
     super({ key: 'Game' })
@@ -36,8 +41,10 @@ export class GameScene extends Phaser.Scene {
     this.board = new Board()
     this.animating = false
     this.selected = null
+    this.bunkerHp = BUNKER_MAX_HP
     this.drawBattlefield()
     this.drawBunker()
+    this.drawHpBar()
     this.createTiles()
 
     this.selectionHighlight = this.add
@@ -49,6 +56,11 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const cell = pointerToGrid(pointer.x, pointer.y)
       if (cell) this.onTileClick(cell.row, cell.col)
+    })
+
+    // Debug: press D to deal 15 damage to the bunker
+    this.input.keyboard!.on('keydown-D', () => {
+      this.applyDamage(15)
     })
   }
 
@@ -63,6 +75,49 @@ export class GameScene extends Phaser.Scene {
     const cy = MID_Y / 2
 
     this.add.rectangle(cx, cy, 48, 48, 0x4a4a6a).setStrokeStyle(2, 0x8888aa)
+  }
+
+  private drawHpBar() {
+    const cx = GAME_WIDTH / 2
+    const cy = MID_Y / 2
+    const barWidth = 80
+    const barHeight = 10
+    const barY = cy + 34
+
+    this.hpBarBg = this.add
+      .rectangle(cx, barY, barWidth, barHeight, 0x333333)
+      .setStrokeStyle(1, 0x666666)
+
+    const fillLeft = cx - barWidth / 2 + 1
+    this.hpBarFill = this.add
+      .rectangle(fillLeft, barY, barWidth - 2, barHeight - 2, 0x40d070)
+      .setOrigin(0, 0.5)
+  }
+
+  private updateHpBar() {
+    const fraction = Math.max(0, this.bunkerHp / BUNKER_MAX_HP)
+    const maxWidth = this.hpBarBg.width - 2
+    this.hpBarFill.width = maxWidth * fraction
+
+    if (fraction > 0.6) {
+      this.hpBarFill.fillColor = 0x40d070 // green
+    } else if (fraction > 0.3) {
+      this.hpBarFill.fillColor = 0xd0d040 // yellow
+    } else {
+      this.hpBarFill.fillColor = 0xd04040 // red
+    }
+  }
+
+  applyDamage(amount: number) {
+    this.bunkerHp = Math.max(0, this.bunkerHp - amount)
+    this.updateHpBar()
+    console.log(`[Bunker] Took ${amount} damage, HP: ${this.bunkerHp}/${BUNKER_MAX_HP}`)
+  }
+
+  private applyHeal(amount: number) {
+    this.bunkerHp = Math.min(BUNKER_MAX_HP, this.bunkerHp + amount)
+    this.updateHpBar()
+    console.log(`[Bunker] Healed ${amount}, HP: ${this.bunkerHp}/${BUNKER_MAX_HP}`)
   }
 
   private createTiles() {
@@ -174,7 +229,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Dispatch effects for each match
-    dispatchMatchEffects(matches)
+    dispatchMatchEffects(matches, (effect: MatchEffect) => {
+      if (effect.type === TileType.Medkit) {
+        this.applyHeal(MEDKIT_HEAL)
+      }
+    })
 
     // Deduplicate cells across overlapping matches
     const toClear = new Set<string>()

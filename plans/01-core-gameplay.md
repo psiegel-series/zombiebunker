@@ -164,19 +164,19 @@ Add bunker health. Medkit matches heal the bunker. Display an HP bar.
 
 ### Tasks
 
-- [ ] Add bunker HP state (e.g., max 100, starts at 100)
-- [ ] Draw an HP bar above or below the bunker in the battlefield
-- [ ] When a Medkit match clears, restore HP (e.g., +10 per match)
-- [ ] Cap healing at max HP
-- [ ] Add a temporary debug button or keyboard shortcut to deal damage to the bunker (for testing healing)
+- [x] Add bunker HP state (e.g., max 100, starts at 100)
+- [x] Draw an HP bar above or below the bunker in the battlefield
+- [x] When a Medkit match clears, restore HP (e.g., +10 per match)
+- [x] Cap healing at max HP
+- [x] Add a temporary debug button or keyboard shortcut to deal damage to the bunker (for testing healing)
 
 ### Tests
 
-- [ ] An HP bar is visible near the bunker, initially full
-- [ ] Pressing the debug damage key reduces the HP bar visibly
-- [ ] Making a Medkit match increases the HP bar
-- [ ] HP does not exceed the maximum (heal when already full — bar stays full)
-- [ ] HP bar color or appearance reflects current health (e.g., green → yellow → red)
+- [x] An HP bar is visible near the bunker, initially full
+- [x] Pressing the debug damage key reduces the HP bar visibly
+- [x] Making a Medkit match increases the HP bar
+- [x] HP does not exceed the maximum (heal when already full — bar stays full)
+- [x] HP bar color or appearance reflects current health (e.g., green → yellow → red)
 
 ---
 
