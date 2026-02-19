@@ -81,7 +81,7 @@ Any of these special formations -- regardless of tile type -- produces an **Airs
 ## Board Mechanics
 
 - **Grid size:** 7 columns x 7 rows.
-- **Swap mechanic:** Classic swap-adjacent (tap one tile, then tap an adjacent tile to swap). A swap only executes if it creates a valid match (no free swaps).
+- **Slide mechanic (10000000-style):** Touch a tile and drag horizontally to shift its entire row, or vertically to shift its entire column. Tiles wrap around -- a tile pushed off one edge reappears on the opposite edge. While dragging, any matches that would form at the current position are highlighted (pulsing/glowing) as a preview. On release, tiles snap to the nearest cell position. If matches exist, they are cleared. If no matches exist at the release position, the tiles snap back to their original positions (invalid move).
 - **Refill:** Top-fill. After tiles are cleared, remaining tiles fall down and new random tiles fill in from the top.
 - **Cascades:** When falling tiles form new matches, those matches resolve and trigger their effects automatically. Cascades chain until the board stabilizes. No combo damage multiplier -- each match in a cascade triggers its normal effect.
 
@@ -140,6 +140,6 @@ Any of these special formations -- regardless of tile type -- produces an **Airs
 | Zombie types | 3 + Boss |
 | Boss frequency | Every 5 waves |
 | Timing | Real-time |
-| Swap rules | Adjacent only, valid matches only |
+| Input | Slide row/column with wrapping (10000000-style) |
 | Cascade multiplier | None |
 | End condition | Endless (death) |

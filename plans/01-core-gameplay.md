@@ -71,25 +71,33 @@ Populate the 7x7 grid with colored tiles representing the 7 tile types. No inter
 
 ---
 
-## Phase 4 — Tile Selection & Swapping
+## Phase 4 — Row/Column Slide Input (REWORK)
 
-Allow the player to tap two adjacent tiles to swap them. Only valid swaps (those that create a match) execute.
+~~Original: tap-to-swap. Replaced with 10000000-style slide mechanic.~~
+
+Replace the tap-to-swap input with drag-to-slide. The player drags a row horizontally or a column vertically. Tiles wrap around. Matches are previewed while dragging and confirmed on release.
 
 ### Tasks
 
-- [x] Add tap/click input handling on the grid: first tap selects a tile (highlight it), second tap on an adjacent tile attempts a swap
-- [x] If the second tap is not adjacent, deselect and select the new tile instead
-- [x] Before executing a swap, check if it would create at least one 3+ match
-- [x] If the swap is invalid, play a brief "reject" animation (tiles bounce back)
-- [x] If the swap is valid, animate the two tiles sliding into each other's positions and update the board data
+- [x] ~~(Old) Tap-to-swap implementation~~ — to be replaced
+- [ ] On pointer down on a tile, begin tracking drag direction (horizontal = row slide, vertical = column slide). Lock to one axis after a small threshold.
+- [ ] While dragging, shift the entire row or column by the drag delta. Tiles wrap around: a tile sliding off one edge appears on the opposite edge.
+- [ ] Update tile display positions in real time as the player drags (smooth, pixel-level movement)
+- [ ] While dragging, run match detection on the current board state and highlight matched tiles (pulsing glow or bright border)
+- [ ] Snap tiles to the nearest whole-cell position on release
+- [ ] On release, if matches exist at the snapped position, commit the board state and trigger match clearing
+- [ ] On release, if no matches exist, animate tiles snapping back to their original positions (invalid move)
+- [ ] Remove the old tap-to-swap and selection highlight code
 
 ### Tests
 
-- [x] Tapping a tile highlights it visually (border, glow, or scale change)
-- [x] Tapping an adjacent tile causes them to swap with a visible animation
-- [x] Tapping a non-adjacent tile after selecting one changes the selection to the new tile
-- [x] Attempting a swap that doesn't create a match causes tiles to bounce back to their original positions
-- [x] After a valid swap, the two tiles are in their new positions on the board
+- [ ] Dragging a tile horizontally shifts the entire row, with tiles wrapping around the edges
+- [ ] Dragging a tile vertically shifts the entire column, with tiles wrapping around the edges
+- [ ] While dragging, matched tiles are visually highlighted in real time
+- [ ] On release, tiles snap to the nearest cell position
+- [ ] If matches exist on release, they clear and cascade as normal
+- [ ] If no matches exist on release, tiles snap back to their original positions
+- [ ] Dragging feels smooth and responsive — tiles follow the pointer in real time
 
 ---
 
