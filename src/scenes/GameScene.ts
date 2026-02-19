@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { Board, GRID_COLS, GRID_ROWS } from '../board/Board'
 import { TileType, TILE_COLORS, TILE_LABELS } from '../board/TileType'
 import { MatchEffect, dispatchMatchEffects } from '../board/MatchEffects'
+import { Zombie, ZombieType } from '../entities/Zombie'
 
 export const GAME_WIDTH = 390
 export const GAME_HEIGHT = 844
@@ -18,6 +19,8 @@ const CLEAR_DURATION = 200
 const FALL_DURATION_PER_ROW = 80
 const CASCADE_PAUSE = 150
 const DRAG_LOCK_THRESHOLD = 6
+const ZOMBIE_SPAWN_MARGIN = 10
+const DEBUG_SPAWN_INTERVAL = 2000
 
 interface TileSprite {
   bg: Phaser.GameObjects.Rectangle
@@ -33,6 +36,11 @@ export class GameScene extends Phaser.Scene {
   private bunkerHp = BUNKER_MAX_HP
   private hpBarFill!: Phaser.GameObjects.Rectangle
   private hpBarBg!: Phaser.GameObjects.Rectangle
+
+  // Zombie state
+  private zombies: Zombie[] = []
+  private bunkerX = GAME_WIDTH / 2
+  private bunkerY = MID_Y / 2
 
   // Drag state
   private dragging = false
@@ -72,6 +80,23 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-D', () => {
       this.applyDamage(15)
     })
+
+    // Debug: press Z to spawn a zombie at a random edge
+    this.input.keyboard!.on('keydown-Z', () => {
+      this.spawnZombie()
+    })
+
+    // Auto-spawn zombies on a timer for testing
+    this.time.addEvent({
+      delay: DEBUG_SPAWN_INTERVAL,
+      callback: () => this.spawnZombie(),
+      loop: true,
+    })
+  }
+
+  update(_time: number, delta: number) {
+    const dt = delta / 1000
+    this.updateZombies(dt)
   }
 
   private drawBattlefield() {
@@ -494,6 +519,61 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(maxDuration + CASCADE_PAUSE, () => {
       this.clearMatches()
     })
+  }
+
+  // ── Zombies ─────────────────────────────────────────────────
+
+  private spawnZombie() {
+    const edge = Math.floor(Math.random() * 4) // 0=top, 1=bottom, 2=left, 3=right
+    let x: number
+    let y: number
+
+    switch (edge) {
+      case 0: // top
+        x = ZOMBIE_SPAWN_MARGIN + Math.random() * (GAME_WIDTH - ZOMBIE_SPAWN_MARGIN * 2)
+        y = ZOMBIE_SPAWN_MARGIN
+        break
+      case 1: // bottom of battlefield (just above divider)
+        x = ZOMBIE_SPAWN_MARGIN + Math.random() * (GAME_WIDTH - ZOMBIE_SPAWN_MARGIN * 2)
+        y = MID_Y - ZOMBIE_SPAWN_MARGIN
+        break
+      case 2: // left
+        x = ZOMBIE_SPAWN_MARGIN
+        y = ZOMBIE_SPAWN_MARGIN + Math.random() * (MID_Y - ZOMBIE_SPAWN_MARGIN * 2)
+        break
+      default: // right
+        x = GAME_WIDTH - ZOMBIE_SPAWN_MARGIN
+        y = ZOMBIE_SPAWN_MARGIN + Math.random() * (MID_Y - ZOMBIE_SPAWN_MARGIN * 2)
+        break
+    }
+
+    const zombie = new Zombie(this, x, y, ZombieType.Walker)
+    this.zombies.push(zombie)
+  }
+
+  private updateZombies(dt: number) {
+    for (let i = this.zombies.length - 1; i >= 0; i--) {
+      const zombie = this.zombies[i]!
+
+      if (zombie.isDead) {
+        zombie.destroy()
+        this.zombies.splice(i, 1)
+        continue
+      }
+
+      const bunkerHalf = 24 // bunker is 48x48
+      const reached = zombie.moveToward(this.bunkerX, this.bunkerY, dt, bunkerHalf)
+      if (reached) {
+        this.applyDamage(zombie.damage)
+        console.log(`[Zombie] ${zombie.type} reached bunker, dealt ${zombie.damage} damage`)
+        zombie.destroy()
+        this.zombies.splice(i, 1)
+      }
+    }
+  }
+
+  getZombies(): Zombie[] {
+    return this.zombies
   }
 }
 

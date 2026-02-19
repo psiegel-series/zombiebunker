@@ -194,22 +194,22 @@ Spawn zombies at the edges of the battlefield and have them walk toward the bunk
 
 ### Tasks
 
-- [ ] Define zombie data: type (Walker for now), HP, speed, position
-- [ ] Create a zombie spawner that places a Walker at a random edge position of the battlefield
-- [ ] Zombies move toward the bunker center at a constant speed each frame
-- [ ] Render zombies as colored circles or simple sprites on the battlefield
-- [ ] When a zombie reaches the bunker, it deals damage to bunker HP and is removed
-- [ ] Add a debug button or auto-timer to spawn zombies for testing (not wave system yet)
-- [ ] Zombies move continuously — they do not pause during match animations or cascades
+- [x] Define zombie data: type (Walker for now), HP, speed, position
+- [x] Create a zombie spawner that places a Walker at a random edge position of the battlefield
+- [x] Zombies move toward the bunker center at a constant speed each frame
+- [x] Render zombies as colored circles or simple sprites on the battlefield
+- [x] When a zombie reaches the bunker, it deals damage to bunker HP and is removed
+- [x] Add a debug button or auto-timer to spawn zombies for testing (not wave system yet)
+- [x] Zombies move continuously — they do not pause during match animations or cascades
 
 ### Tests
 
-- [ ] Zombies appear at the edges of the battlefield as visible shapes
-- [ ] Zombies visibly move toward the bunker over time
-- [ ] When a zombie reaches the bunker, the HP bar decreases
-- [ ] Zombies disappear after reaching the bunker
-- [ ] Zombies keep moving even while the player is making matches and tiles are animating
-- [ ] Multiple zombies can be on screen at once, each moving independently
+- [x] Zombies appear at the edges of the battlefield as visible shapes
+- [x] Zombies visibly move toward the bunker over time
+- [x] When a zombie reaches the bunker, the HP bar decreases
+- [x] Zombies disappear after reaching the bunker
+- [x] Zombies keep moving even while the player is making matches and tiles are animating
+- [x] Multiple zombies can be on screen at once, each moving independently
 
 ---
 
