@@ -37,7 +37,7 @@ export function initRundot() {
 }
 
 export async function getLeaderboardScores(): Promise<{
-  scores: { rank: number; username: string; score: number }[]
+  scores: { rank: number; username: string; score: number; wave: number | null }[]
   myRank: number | null
 }> {
   if (!api) {
@@ -56,6 +56,7 @@ export async function getLeaderboardScores(): Promise<{
         rank: entry.rank ?? i + 1,
         username: entry.username ?? entry.displayName ?? 'Unknown',
         score: entry.score ?? 0,
+        wave: entry.metadata?.wave ?? null,
       }),
     )
 

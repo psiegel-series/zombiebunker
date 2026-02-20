@@ -68,22 +68,36 @@ export class LeaderboardScene extends Phaser.Scene {
 
       const startY = 100
       const rowHeight = 28
+      const hasWaves = scores.some((s) => s.wave !== null)
+
+      // Column positions
+      const colRank = 20
+      const colName = 50
+      const colWave = GAME_WIDTH - 110
+      const colScore = GAME_WIDTH - 20
 
       // Header
+      this.add.text(colRank, startY, '#', {
+        fontSize: '14px',
+        fontFamily: 'monospace',
+        color: '#666666',
+      })
+      this.add.text(colName, startY, 'PLAYER', {
+        fontSize: '14px',
+        fontFamily: 'monospace',
+        color: '#666666',
+      })
+      if (hasWaves) {
+        this.add
+          .text(colWave, startY, 'WAVE', {
+            fontSize: '14px',
+            fontFamily: 'monospace',
+            color: '#666666',
+          })
+          .setOrigin(1, 0)
+      }
       this.add
-        .text(30, startY, '#', {
-          fontSize: '14px',
-          fontFamily: 'monospace',
-          color: '#666666',
-        })
-      this.add
-        .text(60, startY, 'PLAYER', {
-          fontSize: '14px',
-          fontFamily: 'monospace',
-          color: '#666666',
-        })
-      this.add
-        .text(GAME_WIDTH - 30, startY, 'SCORE', {
+        .text(colScore, startY, 'SCORE', {
           fontSize: '14px',
           fontFamily: 'monospace',
           color: '#666666',
@@ -96,23 +110,34 @@ export class LeaderboardScene extends Phaser.Scene {
         const isMyRank = myRank !== null && entry.rank === myRank
         const color = isMyRank ? '#ffcc00' : '#cccccc'
 
-        this.add.text(30, y, String(entry.rank), {
+        this.add.text(colRank, y, String(entry.rank), {
           fontSize: '14px',
           fontFamily: 'monospace',
           color,
         })
 
-        const name = entry.username.length > 16
-          ? entry.username.slice(0, 15) + '…'
+        const maxNameLen = hasWaves ? 12 : 16
+        const name = entry.username.length > maxNameLen
+          ? entry.username.slice(0, maxNameLen - 1) + '…'
           : entry.username
-        this.add.text(60, y, name, {
+        this.add.text(colName, y, name, {
           fontSize: '14px',
           fontFamily: 'monospace',
           color,
         })
+
+        if (hasWaves && entry.wave !== null) {
+          this.add
+            .text(colWave, y, String(entry.wave), {
+              fontSize: '14px',
+              fontFamily: 'monospace',
+              color,
+            })
+            .setOrigin(1, 0)
+        }
 
         this.add
-          .text(GAME_WIDTH - 30, y, String(entry.score), {
+          .text(colScore, y, String(entry.score), {
             fontSize: '14px',
             fontFamily: 'monospace',
             color,
