@@ -1195,6 +1195,26 @@ export class GameScene extends Phaser.Scene {
     btnBg.on('pointerdown', () => {
       this.scene.restart()
     })
+
+    // Leaderboard button
+    const lbBg = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 140, 180, 44, 0x336633)
+      .setStrokeStyle(2, 0x66cc66)
+      .setInteractive({ useHandCursor: true })
+
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 140, 'Leaderboard', {
+        fontSize: '18px',
+        fontFamily: 'monospace',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+
+    lbBg.on('pointerover', () => lbBg.setFillStyle(0x448844))
+    lbBg.on('pointerout', () => lbBg.setFillStyle(0x336633))
+    lbBg.on('pointerdown', () => {
+      this.scene.start('Leaderboard')
+    })
   }
 
   private showWaveMessage(text: string) {
